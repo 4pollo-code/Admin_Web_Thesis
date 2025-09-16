@@ -1,0 +1,11 @@
+Flask
+flask
+Flask-Cors
+Flask-SQLAlchemy
+Flask-Migrate
+python-dotenv
+scikit-learn
+python-dotenv 
+argon2-cffi
+secure-smtplib
+pandas

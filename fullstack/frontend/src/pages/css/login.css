@@ -1,0 +1,333 @@
+/* LoginStyles.css */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #0a0f2e;
+  color: white;
+  overflow: hidden;
+}
+
+.login-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0f2e 0%, #1e2851 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  position: relative;
+}
+
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Header Styles */
+.login-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  z-index: 1;
+  position: relative;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.graduation-cap {
+  font-size: 3rem;
+  filter: brightness(1.2);
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.logo-text {
+  font-size: 3.5rem;
+  font-weight: bold;
+  color: white;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  letter-spacing: -0.02em;
+}
+
+.management-text {
+  font-size: 1.5rem;
+  color: #94a3b8;
+  font-weight: 300;
+  letter-spacing: 0.05em;
+}
+
+/* Login Modal Styles */
+.login-modal {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  width: 100%;
+  max-width: 450px;
+  position: relative;
+  z-index: 2;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.user-icon-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  background: #1e3a8a;
+  border-radius: 50%;
+  margin: 0 auto;
+}
+
+.user-icon {
+  color: white;
+}
+
+.key-icon {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #ffa726;
+  color: white;
+  border-radius: 50%;
+  padding: 2px;
+  width: 20px;
+  height: 20px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.close-btn:hover {
+  background: rgba(100, 116, 139, 0.1);
+  color: #374151;
+  transform: scale(1.1);
+}
+
+/* Form Styles */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  color: #374151;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.required {
+  color: #ef4444;
+}
+
+.form-input {
+  background: #1e3a8a;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 1rem;
+  color: white;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.form-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.form-input:focus {
+  border-color: #ffa726;
+  background: #1e40af;
+  box-shadow: 0 0 0 3px rgba(255, 167, 38, 0.1);
+}
+
+/* Password Container */
+.password-container {
+  position: relative;
+}
+
+.password-input {
+  padding-right: 3rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.password-toggle:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+
+
+/* Login Button */
+.login-btn {
+  background: #4ade80;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+  box-shadow: 0 4px 15px rgba(74, 222, 128, 0.3);
+}
+
+.login-btn:hover {
+  background: #22c55e;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(74, 222, 128, 0.4);
+}
+
+.login-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(74, 222, 128, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 1rem;
+  }
+
+  .logo-text {
+    font-size: 2.5rem;
+  }
+
+  .graduation-cap {
+    font-size: 2rem;
+  }
+
+  .management-text {
+    font-size: 1.2rem;
+  }
+
+  .login-modal {
+    padding: 2rem;
+    margin: 0 1rem;
+  }
+
+  .form-options {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-modal {
+    padding: 1.5rem;
+    border-radius: 15px;
+  }
+
+  .logo-section {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .logo-text {
+    font-size: 2rem;
+  }
+
+  .form-input {
+    padding: 0.875rem;
+    font-size: 0.95rem;
+  }
+
+  .login-btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+  }
+}
+
+/* Focus and Animation Effects */
+.form-input:focus {
+  animation: inputFocus 0.3s ease;
+}
+
+@keyframes inputFocus {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.login-modal {
+  animation: modalSlideIn 0.4s ease;
+}
+
+@keyframes modalSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

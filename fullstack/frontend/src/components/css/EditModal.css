@@ -1,0 +1,46 @@
+.modal-container {
+  width: 500px;
+  max-width: 90%;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.modal-textarea {
+  width: 100%;
+  height: 120px;
+  resize: none;
+  padding: 8px;
+  margin-top: 10px;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+.btn-save {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.btn-cancel {
+  background: #888;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.btn-save:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+.btn-cancel:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
