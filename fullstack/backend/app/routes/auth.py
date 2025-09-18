@@ -50,7 +50,7 @@ def check_session():
 def logout():
     session.clear()
     
-    resp = make_response(jsonify({"success": True, "redirect": "/login"}))
+    resp = make_response(jsonify({"success": True, "redirect": "/"}))
 
     resp.delete_cookie("session")
 

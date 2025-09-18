@@ -9,3 +9,5 @@ python-dotenv
 argon2-cffi
 secure-smtplib
 pandas
+smtplib
+MIMEText

@@ -6,7 +6,7 @@ smtp_port = 587
 sender_email = "apollomarco1214@gmail.com"
 receiver_email = ["tiangson.raphaelzoe@ue.edu.ph", "barreda.marsoncarl@ue.edu.ph"]
 
-password = "iumq wgoa alpa wzct"  # use App Password, not your Gmail password
+password = "iumq wgoa alpa wzct"  
 
 msg = MIMEText("This is a test email")
 msg["Subject"] = "Test"
@@ -24,4 +24,4 @@ try:
 except Exception as e:
     print("Error sending email:", e)
 
-#working
+

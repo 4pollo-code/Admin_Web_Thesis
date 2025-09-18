@@ -12,6 +12,8 @@ class User(db.Model):
     affix = db.Column(db.String(50))
     date_joined = db.Column(db.DateTime, server_default=db.func.now())
     password = db.Column(db.String(255), nullable=False)
+    middle_name = db.Column(db.String(100))
+    birthday = db.Column(db.Date)
     role = db.Column(db.String(50), nullable=False, default='USER')
 
 

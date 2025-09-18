@@ -1,4 +1,5 @@
-from flask import Flask
+from flask import Flask, session
+from datetime import timedelta
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from .config import Config
@@ -15,6 +16,12 @@ def create_app():
     app.config.from_object(Config)
     db.init_app(app)
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+
+    app.permanent_session_lifetime = timedelta(minutes=30)
+
+    @app.before_request
+    def make_session_not_permanent():
+        session.permanent = False
 
     from app.routes.auth import auth_bp
     app.register_blueprint(auth_bp)
