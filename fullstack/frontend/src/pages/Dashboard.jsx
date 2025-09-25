@@ -60,8 +60,10 @@ export default function Dashboard() {
     message: "",
     action: null,
   });
-const [distribution, setDistribution] = useState([]);
-const [distMode, setDistMode] = useState("count"); 
+  const [distribution, setDistribution] = useState([]);
+  const [distMode, setDistMode] = useState("count"); 
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+
 
   const openConfirm = (title, message, action) => {
     setConfirmModal({ show: true, title, message, action });
@@ -231,7 +233,47 @@ const [distMode, setDistMode] = useState("count");
       console.error("Error activating dataset:", err);
     }
   };
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
 
+  const sortData = (data) => {
+    if (!sortConfig.key) return data;
+
+    // special case for index
+    if (sortConfig.key === "index") {
+      return sortConfig.direction === "asc"
+        ? [...originalQuestions]            // reset to API order
+        : [...originalQuestions].reverse(); // reversed
+    }
+
+    // normal sorting
+    return [...data].sort((a, b) => {
+      const valA = a[sortConfig.key] ?? "";
+      const valB = b[sortConfig.key] ?? "";
+
+      if (typeof valA === "number" && typeof valB === "number") {
+        return sortConfig.direction === "asc" ? valA - valB : valB - valA;
+      }
+      return sortConfig.direction === "asc"
+        ? valA.toString().localeCompare(valB.toString())
+        : valB.toString().localeCompare(valA.toString());
+    });
+  };
+
+
+  // helper for showing arrow
+  const getSortArrow = (key) => {
+    if (sortConfig.key !== key) return "";
+    return sortConfig.direction === "asc" ? " ▲" : " ▼";
+  };
+  
+
+  
 
   return (
     <div className="dashboard-container">
@@ -510,7 +552,7 @@ const [distMode, setDistMode] = useState("count");
                       </tr>
                     </thead>
                     <tbody>
-                      {questions.map((q, index) => (
+                      {sortData(questions).map((q, index) => (
                         <tr key={q.question_id}>
                           <td>{index + 1}</td>
                           <td>{q.question_text}</td>
