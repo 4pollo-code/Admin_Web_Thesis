@@ -45,6 +45,8 @@ export default function Dashboard() {
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [originalRecords, setOriginalRecords] = useState([]);
+  const [originalQuestions, setOriginalQuestions] = useState([]);
 
   // action modal
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
@@ -58,8 +60,10 @@ export default function Dashboard() {
     message: "",
     action: null,
   });
-const [distribution, setDistribution] = useState([]);
-const [distMode, setDistMode] = useState("count"); 
+  const [distribution, setDistribution] = useState([]);
+  const [distMode, setDistMode] = useState("count"); 
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+
 
   const openConfirm = (title, message, action) => {
     setConfirmModal({ show: true, title, message, action });
@@ -149,10 +153,14 @@ const [distMode, setDistMode] = useState("count");
         .get(
           `http://127.0.0.1:5000/question-sets/${selectedSet.question_set_id}/questions`
         )
-        .then((res) => setQuestions(res.data))
+        .then((res) => {
+          setQuestions(res.data);
+          setOriginalQuestions(res.data); // keep original order for index sort
+        })
         .catch((err) => console.error("Error fetching questions:", err));
     } else {
       setQuestions([]);
+      setOriginalQuestions([]); // clear when no set selected
     }
   }, [selectedSet]);
 
@@ -188,15 +196,18 @@ const [distMode, setDistMode] = useState("count");
   useEffect(() => {
     if (selectedDataset) {
       axios
-        .get(
-          `http://127.0.0.1:5000/datasets/${selectedDataset.data_set_id}/records`
-        )
-        .then((res) => setRecords(res.data))
+        .get(`http://127.0.0.1:5000/datasets/${selectedDataset.data_set_id}/records`)
+        .then((res) => {
+          setRecords(res.data);
+          setOriginalRecords(res.data); // ✅ keep untouched copy
+        })
         .catch((err) => console.error("Error fetching records:", err));
     } else {
       setRecords([]);
+      setOriginalRecords([]);
     }
   }, [selectedDataset]);
+
 
   const handleDeleteDataset = async (id) => {
     await axios.delete(`http://127.0.0.1:5000/datasets/${id}`);
@@ -213,7 +224,7 @@ const [distMode, setDistMode] = useState("count");
   const handleActivateDataset = async (dataset) => {
     try {
       await axios.put(
-        `http://127.0.0.1:5000/api/datasets/${dataset.data_set_id}/activate`,
+        `http://127.0.0.1:5000/activate/${dataset.data_set_id}`,
         { status: "Active" }, 
         { headers: { "Content-Type": "application/json" } }
       );
@@ -222,7 +233,47 @@ const [distMode, setDistMode] = useState("count");
       console.error("Error activating dataset:", err);
     }
   };
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
 
+  const sortData = (data) => {
+    if (!sortConfig.key) return data;
+
+    // special case for index
+    if (sortConfig.key === "index") {
+      return sortConfig.direction === "asc"
+        ? [...originalQuestions]            // reset to API order
+        : [...originalQuestions].reverse(); // reversed
+    }
+
+    // normal sorting
+    return [...data].sort((a, b) => {
+      const valA = a[sortConfig.key] ?? "";
+      const valB = b[sortConfig.key] ?? "";
+
+      if (typeof valA === "number" && typeof valB === "number") {
+        return sortConfig.direction === "asc" ? valA - valB : valB - valA;
+      }
+      return sortConfig.direction === "asc"
+        ? valA.toString().localeCompare(valB.toString())
+        : valB.toString().localeCompare(valA.toString());
+    });
+  };
+
+
+  // helper for showing arrow
+  const getSortArrow = (key) => {
+    if (sortConfig.key !== key) return "";
+    return sortConfig.direction === "asc" ? " ▲" : " ▼";
+  };
+  
+
+  
 
   return (
     <div className="dashboard-container">
@@ -269,9 +320,7 @@ const [distMode, setDistMode] = useState("count");
                       <li
                         key={set.question_set_id}
                         className={`question-set-item ${
-                          selectedSet?.question_set_id === set.question_set_id
-                            ? "Active"
-                            : ""
+                          selectedSet?.question_set_id === set.question_set_id ? "Active" : ""
                         }`}
                         onClick={() => {
                           setSelectedSet(set);
@@ -324,15 +373,12 @@ const [distMode, setDistMode] = useState("count");
                         <li
                           key={dataset.data_set_id}
                           className={`dataset-item ${
-                            selectedDataset?.data_set_id === dataset.data_set_id
-                              ? "Active"
-                              : ""
+                            selectedDataset?.data_set_id === dataset.data_set_id ? "Active" : ""
                           }`}
                           onClick={() => setSelectedDataset(dataset)}
                         >
                           <span>
-                            {dataset.data_set_name}{" "}
-                            {dataset.active ? "(Active)" : ""}
+                            {dataset.data_set_name} {dataset.active ? "(Active)" : ""}
                           </span>
                           <div className="item-actions">
                             <button
@@ -350,6 +396,7 @@ const [distMode, setDistMode] = useState("count");
                         </li>
                       ))}
                     </ul>
+
                   )
                 ) : (
                   <p>Select a question set to view its datasets.</p>
@@ -462,18 +509,19 @@ const [distMode, setDistMode] = useState("count");
                 records.length === 0 ? (
                   <p>No records for this dataset.</p>
                 ) : (
+                  
                   <table className="question-table">
                     <thead>
                       <tr>
-                        <th>#</th>
-                        <th>Strand</th>
-                        <th>STEM</th>
-                        <th>ABM</th>
-                        <th>HUMSS</th>
+                        <th onClick={() => handleSort("index")}>#{getSortArrow("index")}</th>
+                        <th onClick={() => handleSort("strand")}>Strand{getSortArrow("strand")}</th>
+                        <th onClick={() => handleSort("stem_score")}>STEM{getSortArrow("stem_score")}</th>
+                        <th onClick={() => handleSort("abm_score")}>ABM{getSortArrow("abm_score")}</th>
+                        <th onClick={() => handleSort("humss_score")}>HUMSS{getSortArrow("humss_score")}</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {records.map((rec, index) => (
+                      {sortData(records, sortConfig.key).map((rec, index) => (
                         <tr key={rec.data_id}>
                           <td>{index + 1}</td>
                           <td>{rec.strand}</td>
@@ -492,13 +540,19 @@ const [distMode, setDistMode] = useState("count");
                   <table className="question-table">
                     <thead>
                       <tr>
-                        <th>#</th>
-                        <th>Question</th>
-                        <th>Strand</th>
+                        <th onClick={() => handleSort("index")}>
+                          # {getSortArrow("index")}
+                        </th>
+                        <th onClick={() => handleSort("question_text")}>
+                          Question {getSortArrow("question_text")}
+                        </th>
+                        <th onClick={() => handleSort("strand")}>
+                          Strand {getSortArrow("strand")}
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {questions.map((q, index) => (
+                      {sortData(questions).map((q, index) => (
                         <tr key={q.question_id}>
                           <td>{index + 1}</td>
                           <td>{q.question_text}</td>
@@ -638,10 +692,10 @@ const [distMode, setDistMode] = useState("count");
               </tr>
             </thead>
             <tbody>
-              {datasets
-                .filter(ds =>
-                  ds.data_set_name.toLowerCase().includes(searchQuery.toLowerCase())
-                )
+              {sortData(
+                datasets.filter(ds => ds.data_set_name.toLowerCase().includes(searchQuery.toLowerCase())),
+                sortConfig.key
+              )
                 .map(ds => {
                   const setName =
                     questionSets.find(s => s.question_set_id === ds.question_set_id)?.question_set_name ||
@@ -652,7 +706,7 @@ const [distMode, setDistMode] = useState("count");
                       <td>{setName}</td>
                       <td>{new Date(ds.created_at).toLocaleString()}</td>
                       <td>
-                        {ds.active ? (
+                        {ds.status === "Active" ? (
                           <span className="status-badge active">Active</span>
                         ) : (
                           <span className="status-badge inactive">Inactive</span>
