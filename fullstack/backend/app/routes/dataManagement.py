@@ -148,6 +148,7 @@ def get_dataset_records(data_set_id):
 @dataset_bp.route("/datasets/<int:data_set_id>/activate", methods=["PUT"])
 def update_dataset_status(data_set_id):
     try:
+        
         dataset = DataSet.query.get_or_404(data_set_id)
         data = request.get_json()
         new_status = data.get("status")
@@ -171,4 +172,6 @@ def update_dataset_info(data_set_id):
     except SQLAlchemyError as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+    
+
 

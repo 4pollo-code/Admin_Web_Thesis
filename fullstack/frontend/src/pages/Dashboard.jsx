@@ -13,7 +13,7 @@ function ConfirmModal({ show, title, message, onConfirm, onClose }) {
   if (!show) return null;
   return (
     <div className="modal-overlay">
-      <div className="modal-container small">
+      <div className="modal small">
         <div className="modal-header">
           <h2>{title || "Confirm Action"}</h2>
         </div>
@@ -21,7 +21,7 @@ function ConfirmModal({ show, title, message, onConfirm, onClose }) {
           <p>{message || "Are you sure you want to proceed?"}</p>
         </div>
         <div className="modal-footer">
-          <button className="btn-save" onClick={onConfirm}>
+          <button className="btn btn-primary" onClick={onConfirm}>
             Yes
           </button>
           <button className="btn-cancel" onClick={onClose}>
@@ -32,7 +32,6 @@ function ConfirmModal({ show, title, message, onConfirm, onClose }) {
     </div>
   );
 }
-
 export default function Dashboard() {
   const [selectedSet, setSelectedSet] = useState(null);
   const [selectedDataset, setSelectedDataset] = useState(null);
@@ -41,7 +40,8 @@ export default function Dashboard() {
   const [filteredDatasets, setFilteredDatasets] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [records, setRecords] = useState([]);
-
+  const [isActivateModalOpen, setIsActivateModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(""); 
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -229,6 +229,22 @@ const [distMode, setDistMode] = useState("count");
       <Header />
 
       <div className="main-content">
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
+          <button
+            className="btn btn-primary"
+            onClick={() => setIsActivateModalOpen(true)}
+          >
+            Activate Dataset
+          </button>
+          <input
+            type="text"
+            placeholder="Search datasets..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ padding: "0.4rem 0.8rem", borderRadius: "6px", border: "1px solid #ccc", width: "250px" }}
+          />
+        </div>
+
         <div className="top-section">
           {/* Question Sets */}
           <div className="card question-set">
@@ -241,13 +257,7 @@ const [distMode, setDistMode] = useState("count");
                 Add Question Set
               </button>
 
-              <AddQuestionSetModal
-                show={showModal}
-                onClose={() => setShowModal(false)}
-                onSuccess={(newSet) =>
-                  setQuestionSets([...questionSets, newSet])
-                }
-              />
+              
             </div>
             <div className="card-body">
               <div className="item-container">
@@ -301,14 +311,7 @@ const [distMode, setDistMode] = useState("count");
                 Import Data
               </button>
 
-              <ImportDatasetModal
-                show={showImportModal}
-                onClose={() => setShowImportModal(false)}
-                questionSets={questionSets}
-                onSuccess={(newDataset) =>
-                  setDatasets([...datasets, newDataset])
-                }
-              />
+              
             </div>
             <div className="card-body">
               <div className="item-container">
@@ -535,11 +538,25 @@ const [distMode, setDistMode] = useState("count");
         item={editType === "dataset" ? selectedDataset : selectedSet}
         type={editType}
       />
-
+      <AddQuestionSetModal
+        show={showModal}
+        onClose={() => setShowModal(false)}
+        onSuccess={(newSet) =>
+          setQuestionSets([...questionSets, newSet])
+        }
+      />
+      <ImportDatasetModal
+        show={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        questionSets={questionSets}
+        onSuccess={(newDataset) =>
+          setDatasets([...datasets, newDataset])
+        }
+      />   
       {/* Action Modal */}
       {isActionModalOpen && selectedItem && (
         <div className="modal-overlay">
-          <div className="modal">
+          <div className="modal small">
             <h2>Actions</h2>
             <p>
               What do you want to do with{" "}
@@ -583,26 +600,7 @@ const [distMode, setDistMode] = useState("count");
                 Delete
               </button>
 
-              {/* Activate (only for datasets) */}
-              {editType === "dataset" && (
-                <button
-                  className="btn-primary"
-                  onClick={() =>
-                    openConfirm(
-                      "Activate Dataset",
-                      "Do you want to make this the active dataset? This will replace any currently active dataset in this question set.",
-                      () => {
-                        handleActivateDataset(selectedItem);
-                        setConfirmModal({ show: false });
-                        setIsActionModalOpen(false);
-                      }
-                    )
-                  }
-                >
-                  Activate
-                </button>
-              )}
-
+        
               {/* Cancel just closes */}
               <button
                 className="btn-cancel"
@@ -623,6 +621,71 @@ const [distMode, setDistMode] = useState("count");
         onConfirm={confirmModal.action}
         onClose={() => setConfirmModal({ ...confirmModal, show: false })}
       />
+    {isActivateModalOpen && (
+      <div className="modal-overlay">
+        <div className="modal large">
+          <h2>Activate Dataset</h2>
+          <p>Click "Activate" to make a dataset active.</p>
+
+          <table className="question-table">
+            <thead>
+              <tr>
+                <th>Dataset Name</th>
+                <th>Connected Question Set</th>
+                <th>Date Created</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {datasets
+                .filter(ds =>
+                  ds.data_set_name.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map(ds => {
+                  const setName =
+                    questionSets.find(s => s.question_set_id === ds.question_set_id)?.question_set_name ||
+                    "-";
+                  return (
+                    <tr key={ds.data_set_id}>
+                      <td>{ds.data_set_name}</td>
+                      <td>{setName}</td>
+                      <td>{new Date(ds.created_at).toLocaleString()}</td>
+                      <td>
+                        {ds.active ? (
+                          <span className="status-badge active">Active</span>
+                        ) : (
+                          <span className="status-badge inactive">Inactive</span>
+                        )}
+                      </td>
+                      <td>
+                        {!ds.active && (
+                          <button
+                            className="btn-primary"
+                            onClick={() => {
+                              handleActivateDataset(ds);
+                              setIsActivateModalOpen(false);
+                            }}
+                          >
+                            Activate
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+
+          <div style={{ marginTop: "1rem", textAlign: "right" }}>
+            <button className="btn-cancel" onClick={() => setIsActivateModalOpen(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
+    
   );
 }
