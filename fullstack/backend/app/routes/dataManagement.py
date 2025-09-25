@@ -145,19 +145,37 @@ def get_dataset_records(data_set_id):
     except SQLAlchemyError as e:
         return jsonify({"error": str(e)}), 500
     
-@dataset_bp.route("/datasets/<int:data_set_id>/activate", methods=["PUT"])
+@dataset_bp.route("/activate/<int:data_set_id>", methods=["PUT", "OPTIONS"])
 def update_dataset_status(data_set_id):
+    if request.method == "OPTIONS":
+        # Preflight request, just return OK with headers
+        return "", 200
+
     try:
-        
         dataset = DataSet.query.get_or_404(data_set_id)
         data = request.get_json()
         new_status = data.get("status")
-        dataset.status = new_status
+
+        if new_status == "Active":
+            DataSet.query.filter(
+                DataSet.data_set_id != data_set_id,
+                DataSet.status == "Active"
+            ).update({"status": "Inactive"}, synchronize_session=False)
+            dataset.status = "Active"
+
+        elif new_status == "Inactive":
+            dataset.status = "Inactive"
+
+        print("Changed to ACtive")
         db.session.commit()
         return jsonify(dataset.data_set_info()), 200
+
     except SQLAlchemyError as e:
         db.session.rollback()
+        print(e)
         return jsonify({"error": str(e)}), 500
+
+
 
 @dataset_bp.route("/datasets/<int:data_set_id>", methods=["PUT"])
 def update_dataset_info(data_set_id):

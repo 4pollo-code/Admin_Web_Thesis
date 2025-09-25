@@ -267,7 +267,13 @@ p {
   background: #2563eb;
   color: white;
 }
-
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+th.sortable:hover {
+  background-color: #f0f0f0;
+}
 
 @keyframes fadeIn {
   from { opacity: 0; }
