@@ -18,6 +18,6 @@ class Config:
     VERCEL_LINK = os.getenv("VERCEL_LINK")
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SECURE = True  # True in production
-    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SECURE = True  
+    SESSION_COOKIE_SAMESITE = "None"
     FRONTEND_URL = os.getenv("FRONTEND_URL")

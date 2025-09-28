@@ -12,10 +12,9 @@ def create_app():
     app.config.from_object(Config)
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
-    # Session configuration for cross-origin cookies
+    
     app.permanent_session_lifetime = timedelta(minutes=30)
-    app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # required for cross-origin
-    app.config['SESSION_COOKIE_SECURE'] = True      # required for HTTPS
+
 
     @app.before_request
     def make_session_not_permanent():
@@ -34,8 +33,8 @@ def create_app():
     from app.routes.dataManagement import dataset_bp
     app.register_blueprint(dataset_bp)
 
-    # CORS configuration
-    frontend_url = os.getenv("FRONTEND_URL")  # read from .env in local or Render
+    
+    frontend_url = os.getenv("FRONTEND_URL")  
     CORS(
         app,
         supports_credentials=True,
