@@ -444,10 +444,24 @@ export default function Dashboard() {
               )}
               <div className="stats">
                 {selectedDataset ? (
-                  <div>
-                    <h4>{selectedDataset.rows || 0}</h4>
-                    <p>Rows</p>
-                  </div>
+                  <>
+                    <div>
+                      <h4>{selectedDataset.rows || 0}</h4>
+                      <p>Rows</p>
+                    </div>
+                    <div>
+                      <h4>{selectedDataset.best_k ?? "-"}</h4>
+                      <p>Best K</p>
+                    </div>
+                    <div>
+                      <h4>
+                        {selectedDataset.accuracy != null
+                          ? (selectedDataset.accuracy * 100).toFixed(2) + "%"
+                          : "-"}
+                      </h4>
+                      <p>Accuracy</p>
+                    </div>
+                  </>
                 ) : selectedSet ? (
                   <div>
                     <h4>{selectedSet.total_questions || 0}</h4>

@@ -2,19 +2,33 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import React, { useState, useRef, useEffect } from "react";
 import { GraduationCap, User } from "lucide-react";
+import OTPModal from "../components/OTPModal";
 import "./css/Header.css";
+
 
 const Header = () => {
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [underlineStyle, setUnderlineStyle] = useState({});
   const navRefs = useRef({});
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showChangePwModal, setShowChangePwModal] = useState(false);
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [otp, setOtp] = useState("");
   const modalRef = useRef(null);
   const navigate = useNavigate();
-
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
+  const getInitials = (first, last) => {
+    if (!first && !last) return "";
+    return `${first?.charAt(0) || ""}${last?.charAt(0) || ""}`.toUpperCase();
+  };
   const navItems = [
     { name: "Dashboard", path: "/dashboard" },
     { name: "User Management", path: "/user-management" },
+    { name: "Results View", path: "/results-page" },
   ];
 
   useEffect(() => {
@@ -27,7 +41,7 @@ const Header = () => {
     }
   }, [activeTab]);
 
-  // close modal when clicking outside
+  // close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -38,10 +52,27 @@ const Header = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/me", { withCredentials: true });
+        setUserInfo(response.data);
+        
+      } catch (error) {
+        console.error("Error fetching current user: ", error);
+      }
+    };
+    fetchUser();
+  }, []);
+  
   const handleLogout = async () => {
     try {
-      const res = await axios.post("http://localhost:5000/logout", {}, { withCredentials: true });
-    
+      const res = await axios.post(
+        "http://localhost:5000/logout",
+        {},
+        { withCredentials: true }
+      );
+
       if (res.data.success) {
         navigate(res.data.redirect || "/login");
       }
@@ -49,13 +80,22 @@ const Header = () => {
       console.error("Logout failed", err);
       alert("Logout failed: " + (err.response?.data?.error || err.message));
     }
-    
   };
 
-  const handleChangePassword = () => {
-    alert("Change Password clicked!"); 
-    setShowProfileModal(false);
-  };
+  const handleChangePassword = async () => {
+  if (!newPassword || !confirmPassword) {
+    alert("Please fill out all fields.");
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    alert("Passwords do not match.");
+    return;
+  }
+
+  
+  setShowChangePwModal(false);
+  setShowOTPModal(true);
+};
 
   return (
     <div className="dashboard-header">
@@ -72,13 +112,22 @@ const Header = () => {
             className="profile-btn"
             onClick={() => setShowProfileModal((prev) => !prev)}
           >
-            <User size={24} color="#6b7280" />
+            {userInfo ? (
+              <span className="avatar-text">
+                {getInitials(userInfo.first_name, userInfo.last_name)}
+              </span>
+            ) : (
+              <User size={24} color="#6b7280" />
+            )}
           </button>
 
           {showProfileModal && (
             <div className="profile-modal">
-              <button onClick={handleChangePassword}>Change Password</button>
-              <button onClick={handleLogout}>Logout</button>
+              Hello {userInfo?.first_name} {userInfo?.last_name}!
+              <button onClick={() => setShowChangePwModal(true)}>
+                Change Password
+              </button>
+              <button onClick={() => setShowLogoutModal(true)}>Logout</button>
             </div>
           )}
         </div>
@@ -100,6 +149,66 @@ const Header = () => {
         ))}
         <div className="nav-underline" style={underlineStyle}></div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>Confirm Logout</h3>
+            <p>Are you sure you want to logout?</p>
+            <div className="modal-actions">
+              <button onClick={() => setShowLogoutModal(false)}>Cancel</button>
+              <button onClick={handleLogout}>Logout</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change Password Modal */}
+      {showChangePwModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>Change Password</h3>
+            <input
+              type="password"
+              placeholder="New Password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+            
+            <div className="modal-actions">
+              <button onClick={() => setShowChangePwModal(false)}>
+                Cancel
+              </button>
+              <button onClick={handleChangePassword}>Submit</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showOTPModal && (
+        <OTPModal
+          isOpen={showOTPModal}
+          onClose={() => setShowOTPModal(false)}
+          mode="forgot"
+          formData={{ 
+            email: "user@example.com", // replace with logged-in user’s email
+            newPassword,
+            confirmPassword
+          }}
+          onSuccess={() => {
+            setShowOTPModal(false);
+            setNewPassword("");
+            setConfirmPassword("");
+            alert("Password changed successfully!");
+          }}
+        />
+      )}
     </div>
   );
 };

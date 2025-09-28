@@ -14,7 +14,7 @@
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.85);
+  background-color: rgba(29, 78, 216, 0.9);
   backdrop-filter: blur(10px);
   border-radius: 14px;
   box-shadow: 0 6px 16px rgba(0,0,0,0.1);

@@ -74,6 +74,8 @@ class DataSet(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     last_updated = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now()) 
     status = db.Column(db.String(50), nullable=False, default='Inactive')
+    best_k = db.Column(db.Integer, nullable=False)   
+    accuracy = db.Column(db.Float, nullable=False) 
     data = db.relationship("Data", backref="data_set", cascade="all, delete-orphan")
 
     def data_set_info(self):
@@ -82,6 +84,8 @@ class DataSet(db.Model):
                 "data_set_description": self.data_set_description,
                 "question_set_id": self.question_set_id,
                 "status": self.status,
+                "best_k": self.best_k,       
+                "accuracy": self.accuracy,
                 "created_at": self.created_at.isoformat()}
     
 class Data(db.Model):

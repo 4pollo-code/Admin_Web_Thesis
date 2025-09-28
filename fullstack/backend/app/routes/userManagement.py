@@ -73,3 +73,5 @@ def display_users():
         return jsonify(users_list), 200
     except Exception as e:
         return jsonify({"error": f"Failed to Retrieve Users: {str(e)}"}), 500
+    
+

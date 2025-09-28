@@ -24,16 +24,19 @@ def get_datasets():
         datasets = DataSet.query.all()
         response = []
         for ds in datasets:
+            print("Loaded dataset:", ds)  # debug
             rows_count = Data.query.filter_by(data_set_id=ds.data_set_id).count()
+            print("Rows count:", rows_count)
+            print("DataSet info:", ds.data_set_info())  # <- likely crashes here
             response.append({
                 **ds.data_set_info(),
                 "rows": rows_count
             })
-        print(response)
         return jsonify(response), 200
-    except SQLAlchemyError as e:
+    except Exception as e:  # catch everything
+        print("❌ ERROR in /datasets:", str(e))
         return jsonify({"error": str(e)}), 500
-    
+
 # Create a new dataset
 @dataset_bp.route("/import_dataset", methods=["POST"])
 def import_dataset():
@@ -47,7 +50,7 @@ def import_dataset():
         if not dataset_name or not question_set_id or not rows:
             return jsonify({"error": "Missing dataset_name, question_set_id, or rows"}), 400
 
-        # Fetch questions from DB
+        # Fetch questions
         questions = Question.query.filter_by(set_id=question_set_id).all()
         if not questions:
             return jsonify({"error": "No questions found for this question set"}), 400
@@ -58,30 +61,28 @@ def import_dataset():
         file_questions = [q for q in rows[0].keys() if normalize(q) != "strand"]
         norm_file_questions = {normalize(q) for q in file_questions}
 
-        # Compare sets
         missing_in_file = set(db_questions.keys()) - norm_file_questions
         extra_in_file = norm_file_questions - set(db_questions.keys())
 
         if missing_in_file or extra_in_file:
-            print("Mismatch detected:")
-            print(" Missing in file:", missing_in_file)
-            print(" Extra in file:", extra_in_file)
             return jsonify({
                 "error": "Mismatch in questions detected",
                 "missing_in_file": list(missing_in_file),
                 "extra_in_file": list(extra_in_file)
             }), 400
 
-        # ✅ Save dataset metadata
+        # ✅ Step 1: Create dataset with placeholder values (flush only)
         dataset = DataSet(
             data_set_name=dataset_name,
             data_set_description=description,
             question_set_id=question_set_id,
+            best_k=0,      # temporary
+            accuracy=0.0   # temporary
         )
         db.session.add(dataset)
-        db.session.flush()  # generate dataset_id
+        db.session.flush()  # ensures dataset_id is available
 
-        # ✅ Process each row
+        # ✅ Step 2: Process rows into Data
         strand_entries = []
         for row in rows:
             strand_label = row.get("Strand", "").strip()
@@ -89,29 +90,40 @@ def import_dataset():
 
             for question, value in row.items():
                 if normalize(question) == "strand":
-                    continue  # ignore strand column
+                    continue
                 norm_q = normalize(question)
                 strand = db_questions.get(norm_q)
                 if strand in totals:
                     try:
                         totals[strand] += int(value or 0)
-                        
                     except (ValueError, TypeError):
                         return jsonify({"error": f"Invalid score for question '{question}'"}), 400
 
             entry = Data(
                 data_set_id=dataset.data_set_id,
-                strand=strand_label,  
+                strand=strand_label,
                 stem_score=totals["STEM"],
                 abm_score=totals["ABM"],
                 humss_score=totals["HUMSS"],
             )
-            
             db.session.add(entry)
-            
             strand_entries.append(entry.data_info())
-            print(entry.data_info())
 
+        # ✅ Step 3: Calculate KNN before commit
+        from app.services.KNN import KNN
+        X = [[r["stem_score"], r["abm_score"], r["humss_score"]] for r in strand_entries]
+        y = [r["strand"] for r in strand_entries]
+
+        if len(X) >= 2:
+            knn_runner = KNN(None, X, y)
+            best_k, accuracy = knn_runner.calculate_k()
+            dataset.best_k = best_k
+            dataset.accuracy = float(accuracy)
+        else:
+            dataset.best_k = 5
+            dataset.accuracy = 1.0
+
+        # ✅ Step 4: Commit once at the end
         db.session.commit()
 
         return jsonify({
@@ -124,6 +136,8 @@ def import_dataset():
         db.session.rollback()
         print("❌ Error during import:", str(e))
         return jsonify({"error": str(e)}), 500
+
+
 
 
 @dataset_bp.route("/datasets/<int:data_set_id>", methods=["DELETE"])
