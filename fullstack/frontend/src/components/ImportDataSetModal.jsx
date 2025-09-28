@@ -9,7 +9,7 @@ export default function ImportDataSetModal({ show, onClose, onSuccess, questionS
   const [datasetName, setDatasetName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedSetId, setSelectedSetId] = useState("");
-
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
   if (!show) return null;
 
   const handleFileUpload = (e) => {
@@ -45,7 +45,7 @@ export default function ImportDataSetModal({ show, onClose, onSuccess, questionS
  
 
    try {
-      const res = await axios.post("http://127.0.0.1:5000/import_dataset", payload);
+      const res = await axios.post(`${API_BASE_URL}/import_dataset`, payload);
       alert("Dataset imported successfully!");
       onSuccess(res.data);
       onClose();

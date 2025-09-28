@@ -10,11 +10,11 @@ export default function UserManagementSystem() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ first_name: "", last_name: "", email: "", role: "USER" });
   const [currentUser, setCurrentUser] = useState(null);
-
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: "first_name", direction: "asc" });
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   useEffect(() => {
     fetchUsers();
@@ -23,7 +23,7 @@ export default function UserManagementSystem() {
 
   const fetchCurrentUser = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/me", { withCredentials: true });
+      const response = await axios.get(`${API_BASE_URL}/me`, { withCredentials: true });
       setCurrentUser(response.data);
     } catch (error) {
       console.error("Error fetching current user: ", error);
@@ -31,7 +31,7 @@ export default function UserManagementSystem() {
   };
 
   const fetchUsers = () => {
-    axios.get('http://127.0.0.1:5000/user-management')
+    axios.get(`${API_BASE_URL}/user-management`)
       .then((res) => setUsers(res.data))
       .catch((err) => console.error("Error fetching users:", err));
   };
@@ -60,9 +60,9 @@ export default function UserManagementSystem() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (selectedUser) {
-      await axios.put(`http://127.0.0.1:5000/user-management/${selectedUser.user_id}`, formData);
+      await axios.put(`${API_BASE_URL}/${selectedUser.user_id}`, formData);
     } else {
-      await axios.post('http://127.0.0.1:5000/user-management', formData);
+      await axios.post(`${API_BASE_URL}/user-management`, formData);
     }
     fetchUsers();
     closeModal();
@@ -70,7 +70,7 @@ export default function UserManagementSystem() {
 
   const handleDelete = async () => {
     if (selectedUser) {
-      await axios.delete(`http://127.0.0.1:5000/user-management/${selectedUser.user_id}`);
+      await axios.delete(`${API_BASE_URL}/user-management/${selectedUser.user_id}`);
       fetchUsers();
       closeModal();
     }

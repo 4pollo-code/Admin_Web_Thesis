@@ -9,6 +9,7 @@ export default function AddQuestionSetModal({ show, onClose, onSuccess }) {
   const [questions, setQuestions] = useState([]);
   const [questionSetName, setQuestionSetName] = useState("");
   const [description, setDescription] = useState("");
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   if (!show) return null;
 
@@ -44,7 +45,7 @@ export default function AddQuestionSetModal({ show, onClose, onSuccess }) {
 
   try {
     console.log("Submitting to backend...");
-    const res = await axios.post("http://127.0.0.1:5000/question-sets", payload);
+    const res = await axios.post(`${API_BASE_URL}/question-sets`, payload);
     console.log("Save successful", res.data);
     onSuccess(res.data);  // pass new set back to parent
     console.log(res.data);

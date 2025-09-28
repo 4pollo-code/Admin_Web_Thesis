@@ -15,6 +15,7 @@ const OTPModal = ({
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
   const navigate = useNavigate();
 
  
@@ -27,7 +28,7 @@ const OTPModal = ({
       try {
         if (mode === "forgot") {
           await axios.post(
-            "http://localhost:5000/request-otp",
+            `${API_BASE_URL}/request-otp`,
             { email },
             { withCredentials: true }
           );
@@ -76,7 +77,7 @@ const OTPModal = ({
       let res;
       if (mode === "signup") {
         res = await axios.post(
-          "http://localhost:5000/verify-email",
+          `${API_BASE_URL}/verify-email`,
           { otp: otpString },
           { withCredentials: true }
         );
@@ -97,14 +98,14 @@ const OTPModal = ({
           return;
         }
         res = await axios.post(
-          "http://localhost:5000/forgot-password",
+          `${API_BASE_URL}/forgot-password`,
           { otp: otpString, newPassword },
           { withCredentials: true }
         );
         if (res.data.success) {
           if (onSuccess) onSuccess();
           alert("Password reset successfully!");
-          navigate("/userlogin");
+          navigate("/");
         }
       }
     } catch (err) {
@@ -126,11 +127,11 @@ const OTPModal = ({
   const handleResend = async () => {
     try {
       if (mode === "signup") {
-        const res = await axios.post("http://localhost:5000/signup/resend-otp", {}, { withCredentials: true });
+        const res = await axios.post(`${API_BASE_URL}/signup/resend-otp`, {}, { withCredentials: true });
         alert(res.data.message || "New OTP sent!");
         setCooldown(60); // start 60s cooldown
       } else if (mode === "forgot") {
-        await axios.post("http://localhost:5000/request-otp", { email }, { withCredentials: true });
+        await axios.post(`${API_BASE_URL}/request-otp`, { email }, { withCredentials: true });
         alert("New reset OTP sent!");
         setCooldown(60);
       }

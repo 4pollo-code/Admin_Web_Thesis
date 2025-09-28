@@ -12,7 +12,7 @@ export default function Login() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -27,7 +27,7 @@ const handleSubmit = async (e) => {
 
   try {
     const res = await axios.post(
-      "http://localhost:5000/login",
+      `${API_BASE_URL}/login`,
       { 
         email: formData.email, 
         password: formData.password, 
@@ -92,7 +92,7 @@ const handleSubmit = async (e) => {
             <input
               type="text"
               name="email"
-              value={formData.username}
+              value={formData.email}
               onChange={handleInputChange}
               placeholder="Email"
               className="form-input"

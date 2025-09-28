@@ -47,6 +47,7 @@ export default function Dashboard() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [originalRecords, setOriginalRecords] = useState([]);
   const [originalQuestions, setOriginalQuestions] = useState([]);
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   // action modal
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
@@ -121,14 +122,14 @@ export default function Dashboard() {
 
   const fetchQuestionSets = () => {
     axios
-      .get("http://127.0.0.1:5000/question-sets")
+      .get(`${API_BASE_URL}/question-sets`)
       .then((res) => setQuestionSets(res.data))
       .catch((err) => console.error("Error fetching question sets:", err));
   };
 
   const fetchDatasets = () => {
     axios
-      .get("http://127.0.0.1:5000/datasets")
+      .get(`${API_BASE_URL}/datasets`)
       .then((res) => setDatasets(res.data))
       .catch((err) => console.error("Error fetching datasets:", err));
   };
@@ -151,7 +152,7 @@ export default function Dashboard() {
     if (selectedSet) {
       axios
         .get(
-          `http://127.0.0.1:5000/question-sets/${selectedSet.question_set_id}/questions`
+          `${API_BASE_URL}/question-sets/${selectedSet.question_set_id}/questions`
         )
         .then((res) => {
           setQuestions(res.data);
@@ -169,7 +170,7 @@ export default function Dashboard() {
   try {
     if (editType === "dataset" && selectedDataset) {
       await axios.put(
-        `http://127.0.0.1:5000/datasets/${selectedDataset.data_set_id}`,
+        `${API_BASE_URL}/datasets/${selectedDataset.data_set_id}`,
         {
           data_set_name: selectedDataset.data_set_name,
           data_set_description: newDesc,
@@ -178,7 +179,7 @@ export default function Dashboard() {
       fetchDatasets(); // refresh list
     } else if (editType === "set" && selectedSet) {
       await axios.put(
-        `http://127.0.0.1:5000/question-sets/${selectedSet.question_set_id}`,
+        `${API_BASE_URL}/question-sets/${selectedSet.question_set_id}`,
         {
           question_set_name: selectedSet.question_set_name,
           description: newDesc,
@@ -196,7 +197,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (selectedDataset) {
       axios
-        .get(`http://127.0.0.1:5000/datasets/${selectedDataset.data_set_id}/records`)
+        .get(`${API_BASE_URL}/datasets/${selectedDataset.data_set_id}/records`)
         .then((res) => {
           setRecords(res.data);
           setOriginalRecords(res.data); // ✅ keep untouched copy
@@ -210,13 +211,13 @@ export default function Dashboard() {
 
 
   const handleDeleteDataset = async (id) => {
-    await axios.delete(`http://127.0.0.1:5000/datasets/${id}`);
+    await axios.delete(`${API_BASE_URL}/datasets/${id}`);
     setSelectedDataset(null);
     fetchDatasets();
   };
 
   const handleDeleteQuestionSet = async (id) => {
-    await axios.delete(`http://127.0.0.1:5000/question-sets/${id}`);
+    await axios.delete(`${API_BASE_URL}/question-sets/${id}`);
     setSelectedSet(null);
     fetchQuestionSets();
   };
@@ -224,7 +225,7 @@ export default function Dashboard() {
   const handleActivateDataset = async (dataset) => {
     try {
       await axios.put(
-        `http://127.0.0.1:5000/activate/${dataset.data_set_id}`,
+        `${API_BASE_URL}/activate/${dataset.data_set_id}`,
         { status: "Active" }, 
         { headers: { "Content-Type": "application/json" } }
       );

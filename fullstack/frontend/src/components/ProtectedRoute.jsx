@@ -7,11 +7,12 @@ axios.defaults.withCredentials = true;
 export default function ProtectedRoute({ children }) {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/check-session");
+        const res = await axios.get(`${API_BASE_URL}/check-session`);
         if (res.data.logged_in) {
           setAuthenticated(true);
         } else {
