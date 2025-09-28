@@ -14,7 +14,7 @@ export default function UserManagementSystem() {
   const [sortConfig, setSortConfig] = useState({ key: "first_name", direction: "asc" });
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     fetchUsers();

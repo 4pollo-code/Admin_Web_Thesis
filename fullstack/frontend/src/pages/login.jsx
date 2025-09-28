@@ -12,7 +12,7 @@ export default function Login() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -23,7 +23,7 @@ export default function Login() {
 
 const handleSubmit = async (e) => {
   e.preventDefault();
-  console.log("Login submitted:", formData);
+  console.log("API URL:", process.env.REACT_APP_API_URL);
 
   try {
     const res = await axios.post(
