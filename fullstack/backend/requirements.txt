@@ -7,3 +7,4 @@ scikit-learn
 argon2-cffi
 pandas
 psycopg2-binary
+gunicorn
