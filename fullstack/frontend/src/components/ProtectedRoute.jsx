@@ -7,7 +7,7 @@ axios.defaults.withCredentials = true;
 export default function ProtectedRoute({ children }) {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const checkSession = async () => {

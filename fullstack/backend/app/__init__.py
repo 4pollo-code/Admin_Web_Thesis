@@ -12,9 +12,9 @@ db = SQLAlchemy()
 
 def create_app():
     app = Flask(__name__)
-    
-    CORS(app, supports_credentials=True, origins=[app.config.get("FRONTEND_URL")])
     app.config.from_object(Config)
+    CORS(app, supports_credentials=True, origins=[app.config.get("FRONTEND_URL")])
+    
     db.init_app(app)
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 

@@ -15,7 +15,7 @@ const OTPModal = ({
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
   const navigate = useNavigate();
 
  
