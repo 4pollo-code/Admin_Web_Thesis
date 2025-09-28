@@ -20,3 +20,4 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SECURE = True  # True in production
     SESSION_COOKIE_SAMESITE = "Lax"
+    FRONTEND_URL = os.getenv("FRONTEND_URL")

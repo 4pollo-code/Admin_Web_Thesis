@@ -9,7 +9,7 @@ export default function AddQuestionSetModal({ show, onClose, onSuccess }) {
   const [questions, setQuestions] = useState([]);
   const [questionSetName, setQuestionSetName] = useState("");
   const [description, setDescription] = useState("");
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
   if (!show) return null;
 

@@ -12,7 +12,7 @@ export default function Login() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({

@@ -9,7 +9,7 @@ export default function ImportDataSetModal({ show, onClose, onSuccess, questionS
   const [datasetName, setDatasetName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedSetId, setSelectedSetId] = useState("");
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
   if (!show) return null;
 
   const handleFileUpload = (e) => {
