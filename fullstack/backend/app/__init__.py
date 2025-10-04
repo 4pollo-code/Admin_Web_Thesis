@@ -33,6 +33,9 @@ def create_app():
     from app.routes.dataManagement import dataset_bp
     app.register_blueprint(dataset_bp)
 
+    from app.routes.resultsView import results_bp
+    app.register_blueprint(results_bp)
+
     
     frontend_url = os.getenv("FRONTEND_URL")  
     CORS(
