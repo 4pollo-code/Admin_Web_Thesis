@@ -166,7 +166,9 @@ body {
   color: #ef4444;
 }
 
+/* Input alignment fix */
 .form-input {
+  width: 100%;
   background: #1e3a8a;
   border: 2px solid transparent;
   border-radius: 8px;
@@ -175,6 +177,7 @@ body {
   font-size: 1rem;
   transition: all 0.3s ease;
   outline: none;
+  box-sizing: border-box;
 }
 
 .form-input::placeholder {
@@ -190,15 +193,18 @@ body {
 /* Password Container */
 .password-container {
   position: relative;
+  width: 100%; /* same width as other inputs */
 }
 
 .password-input {
-  padding-right: 3rem;
+  width: 100%;
+  padding-right: 2.75rem; /* reserved space for icon */
+  box-sizing: border-box;
 }
 
 .password-toggle {
   position: absolute;
-  right: 1rem;
+  right: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -214,8 +220,6 @@ body {
   color: white;
   background: rgba(255, 255, 255, 0.1);
 }
-
-
 
 /* Login Button */
 .login-btn {
@@ -306,15 +310,9 @@ body {
 }
 
 @keyframes inputFocus {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
-  100% {
-    transform: scale(1);
-  }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
 }
 
 .login-modal {
