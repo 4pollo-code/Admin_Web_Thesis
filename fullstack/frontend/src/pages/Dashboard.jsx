@@ -693,7 +693,7 @@ export default function Dashboard() {
     {isActivateModalOpen && (
       <div className="modal-overlay">
         <div className="modal large">
-          <h2>Activate Dataset</h2>
+          <h2 style={{ color: "black" }}>Activate Dataset</h2>
           <p>Click "Activate" to make a dataset active.</p>
 
           <table className="question-table">
