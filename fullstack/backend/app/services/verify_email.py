@@ -1,19 +1,27 @@
+import os
+import random
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import random
-import app.config as Config
-import os
+import ssl
+import certifi
 
-smtp_server = Config.Config.SMTP_SERVER
-smtp_port = Config.Config.SMTP_PORT
-sender_email = Config.Config.SENDER_EMAIL
-password = os.getenv("APP_PASSWORD")
+# --- Load config ---
+SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
+SENDER_EMAIL = os.getenv("SENDER_EMAIL")
+APP_PASSWORD = os.getenv("APP_PASSWORD")  # Only for SMTP
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 
-def verify_email(email: str):
+# --- Set SSL environment for local dev (optional, helps cert verification) ---
+os.environ['SSL_CERT_FILE'] = certifi.where()
+os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
+
+
+def verify_email(email: str) -> str | None:
+
     otp = str(random.randint(100000, 999999))
 
-    # Build the HTML email body
     html_content = f"""
     <html>
       <body style="font-family: Arial, sans-serif; background-color: #f4f4f7; padding: 20px;">
@@ -44,24 +52,41 @@ def verify_email(email: str):
     </html>
     """
 
-    # Create a MIME multipart message
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = "🔑 Strandify - Verify Your Email"
-    msg["From"] = sender_email
-    msg["To"] = email
+    # --- Use SendGrid API if key is available ---
+    if SENDGRID_API_KEY:
+        try:
+            from sendgrid import SendGridAPIClient
+            from sendgrid.helpers.mail import Mail
 
-    # Attach HTML body
-    msg.attach(MIMEText(html_content, "html"))
+            message = Mail(
+                from_email=SENDER_EMAIL,
+                to_emails=email,
+                subject="🔑 Strandify - Verify Your Email",
+                html_content=html_content
+            )
+            sg = SendGridAPIClient(SENDGRID_API_KEY)
+            sg.send(message)
+            return otp
+        except Exception as e:
+            print("SendGrid error:", e)
+            return None
 
-    try:
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
-        server.login(sender_email, password)
+    # --- Fallback to SMTP (local dev) ---
+    else:
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = "🔑 Strandify - Verify Your Email"
+            msg["From"] = SENDER_EMAIL
+            msg["To"] = email
+            msg.attach(MIMEText(html_content, "html"))
 
-        server.sendmail(sender_email, [email], msg.as_string())
-        server.quit()
+            context = ssl.create_default_context(cafile=certifi.where())
+            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                server.starttls(context=context)
+                server.login(SENDER_EMAIL, APP_PASSWORD)
+                server.sendmail(SENDER_EMAIL, [email], msg.as_string())
 
-        return otp
-    except Exception as e:
-        print("Error sending email:", e)
-        return None
+            return otp
+        except Exception as e:
+            print("SMTP error:", e)
+            return None
