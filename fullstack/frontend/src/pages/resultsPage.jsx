@@ -21,12 +21,12 @@ const AssessmentResults = () => {
   const [error, setError] = useState(null);
   const [expandedRows, setExpandedRows] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
-
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
   // Axios fetch results
   const fetchResults = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get("http://localhost:5000/results/");
+      const { data } = await axios.get(`${API_BASE_URL}/results/`, { withCredentials: true });
       setResults(data);
       setError(null);
     } catch (err) {
