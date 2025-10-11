@@ -31,6 +31,7 @@ const Header = () => {
     { name: "Results View", path: "/results-page" },
   ];
   const API_BASE_URL = process.env.REACT_APP_API_URL;
+  const token = sessionStorage.getItem("token");
 
   useEffect(() => {
     const currentTab = navRefs.current[activeTab];
@@ -56,7 +57,7 @@ const Header = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/me`, { withCredentials: true });
+        const response = await axios.get(`${API_BASE_URL}/me`, { headers: { Authorization: `Bearer ${token}` }});
         setUserInfo(response.data);
         
       } catch (error) {

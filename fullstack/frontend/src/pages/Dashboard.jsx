@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import axios from "axios";
 import AddQuestionSetModal from "../components/AddQuestionSetModal";
 import ImportDatasetModal from "../components/ImportDataSetModal";
+import { useNavigate } from "react-router-dom";
 import EditModal from "../components/EditModal";
 
 
@@ -47,14 +48,12 @@ export default function Dashboard() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [originalRecords, setOriginalRecords] = useState([]);
   const [originalQuestions, setOriginalQuestions] = useState([]);
+  const navigate = useNavigate();
   const API_BASE_URL = process.env.REACT_APP_API_URL;
-
-  // action modal
+  const token = sessionStorage.getItem('token');
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [editType, setEditType] = useState(null); 
-
-  // confirm modal state
   const [confirmModal, setConfirmModal] = useState({
     show: false,
     title: "",
@@ -118,18 +117,36 @@ export default function Dashboard() {
   useEffect(() => {
     fetchQuestionSets();
     fetchDatasets();
+    checkToken()
   }, []);
+
+  const checkToken = async () => {
+    if (!token) {
+        alert("Session expired. Please log in again.");
+        navigate("/");
+        return;
+      }
+    try{
+      const meRes = await axios.get(`${API_BASE_URL}/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch (err) {
+        console.error("Error fetching initial data:", err);
+        navigate("/");
+    }
+    
+  };
 
   const fetchQuestionSets = () => {
     axios
-      .get(`${API_BASE_URL}/question-sets`)
+      .get(`${API_BASE_URL}/question-sets`, {headers: { Authorization: `Bearer ${token}` }})
       .then((res) => setQuestionSets(res.data))
       .catch((err) => console.error("Error fetching question sets:", err));
   };
 
   const fetchDatasets = () => {
     axios
-      .get(`${API_BASE_URL}/datasets`)
+      .get(`${API_BASE_URL}/datasets`, {headers: { Authorization: `Bearer ${token}` }})
       .then((res) => setDatasets(res.data))
       .catch((err) => console.error("Error fetching datasets:", err));
   };
@@ -152,7 +169,7 @@ export default function Dashboard() {
     if (selectedSet) {
       axios
         .get(
-          `${API_BASE_URL}/question-sets/${selectedSet.question_set_id}/questions`
+          `${API_BASE_URL}/question-sets/${selectedSet.question_set_id}/questions`, {headers: { Authorization: `Bearer ${token}` }},
         )
         .then((res) => {
           setQuestions(res.data);
@@ -170,7 +187,7 @@ export default function Dashboard() {
   try {
     if (editType === "dataset" && selectedDataset) {
       await axios.put(
-        `${API_BASE_URL}/datasets/${selectedDataset.data_set_id}`,
+        `${API_BASE_URL}/datasets/${selectedDataset.data_set_id}`, {headers: { Authorization: `Bearer ${token}` }},
         {
           data_set_name: selectedDataset.data_set_name,
           data_set_description: newDesc,
@@ -179,7 +196,7 @@ export default function Dashboard() {
       fetchDatasets(); // refresh list
     } else if (editType === "set" && selectedSet) {
       await axios.put(
-        `${API_BASE_URL}/question-sets/${selectedSet.question_set_id}`,
+        `${API_BASE_URL}/question-sets/${selectedSet.question_set_id}`, {headers: { Authorization: `Bearer ${token}` }},
         {
           question_set_name: selectedSet.question_set_name,
           description: newDesc,
@@ -197,7 +214,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (selectedDataset) {
       axios
-        .get(`${API_BASE_URL}/datasets/${selectedDataset.data_set_id}/records`)
+        .get(`${API_BASE_URL}/datasets/${selectedDataset.data_set_id}/records`, { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => {
           setRecords(res.data);
           setOriginalRecords(res.data); // ✅ keep untouched copy
@@ -211,13 +228,13 @@ export default function Dashboard() {
 
 
   const handleDeleteDataset = async (id) => {
-    await axios.delete(`${API_BASE_URL}/datasets/${id}`);
+    await axios.delete(`${API_BASE_URL}/datasets/${id}`, { headers: { Authorization: `Bearer ${token}` } });
     setSelectedDataset(null);
     fetchDatasets();
   };
 
   const handleDeleteQuestionSet = async (id) => {
-    await axios.delete(`${API_BASE_URL}/question-sets/${id}`);
+    await axios.delete(`${API_BASE_URL}/question-sets/${id}`, { headers: { Authorization: `Bearer ${token}` } });
     setSelectedSet(null);
     fetchQuestionSets();
   };

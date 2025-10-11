@@ -20,20 +20,21 @@ def normalize(text):
 # Get all datasets
 @dataset_bp.route("/datasets", methods=["GET"])
 def get_datasets():
+
     try:
         datasets = DataSet.query.all()
         response = []
         for ds in datasets:
-            print("Loaded dataset:", ds)  # debug
+            print("Loaded dataset:", ds)  
             rows_count = Data.query.filter_by(data_set_id=ds.data_set_id).count()
             print("Rows count:", rows_count)
-            print("DataSet info:", ds.data_set_info())  # <- likely crashes here
+            print("DataSet info:", ds.data_set_info()) 
             response.append({
                 **ds.data_set_info(),
                 "rows": rows_count
             })
         return jsonify(response), 200
-    except Exception as e:  # catch everything
+    except Exception as e:  
         print("❌ ERROR in /datasets:", str(e))
         return jsonify({"error": str(e)}), 500
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Search, Users, Plus, Edit } from 'lucide-react';
 import axios from 'axios';
 import './css/userManagement.css';
+import { useNavigate } from "react-router-dom";
 import Header from '../components/Header';
 
 export default function UserManagementSystem() {
@@ -14,24 +15,35 @@ export default function UserManagementSystem() {
   const [sortConfig, setSortConfig] = useState({ key: "first_name", direction: "asc" });
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
+  const navigate = useNavigate();
+  const token = sessionStorage.getItem('token');
   const API_BASE_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     fetchUsers();
-    fetchCurrentUser();
+    checkToken();
   }, []);
-
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/me`, { withCredentials: true });
-      setCurrentUser(response.data);
-    } catch (error) {
-      console.error("Error fetching current user: ", error);
+  const checkToken = async () => {
+    if (!token) {
+        alert("Session expired. Please log in again.");
+        navigate("/");
+        return;
+      }
+    try{
+      const meRes = await axios.get(`${API_BASE_URL}/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCurrentUser(meRes.data)
+    } catch (err) {
+        console.error("Error fetching initial data:", err);
+        navigate("/");
     }
+    
   };
+  
 
   const fetchUsers = () => {
-    axios.get(`${API_BASE_URL}/user-management`)
+    axios.get(`${API_BASE_URL}/user-management`, {headers: { Authorization: `Bearer ${token}` }})
       .then((res) => setUsers(res.data))
       .catch((err) => console.error("Error fetching users:", err));
   };
@@ -60,9 +72,9 @@ export default function UserManagementSystem() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (selectedUser) {
-      await axios.put(`${API_BASE_URL}/${selectedUser.user_id}`, formData);
+      await axios.put(`${API_BASE_URL}/${selectedUser.user_id}`,{headers: { Authorization: `Bearer ${token}` }}, formData);
     } else {
-      await axios.post(`${API_BASE_URL}/user-management`, formData);
+      await axios.post(`${API_BASE_URL}/user-management`,{headers: { Authorization: `Bearer ${token}` }}, formData);
     }
     fetchUsers();
     closeModal();
@@ -70,7 +82,7 @@ export default function UserManagementSystem() {
 
   const handleDelete = async () => {
     if (selectedUser) {
-      await axios.delete(`${API_BASE_URL}/user-management/${selectedUser.user_id}`);
+      await axios.delete(`${API_BASE_URL}/user-management/${selectedUser.user_id}`, {headers: { Authorization: `Bearer ${token}` }});
       fetchUsers();
       closeModal();
     }

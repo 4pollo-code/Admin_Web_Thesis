@@ -10,16 +10,21 @@ const OTPModal = ({
   mode = "signup", // "signup" or "forgot"
   onSuccess
 }) => {
-  const { email = "", newPassword = "", confirmPassword = "" } = formData;
+  const { email = "", newPassword = "", confirmPassword = "",  } = formData;
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const API_BASE_URL = process.env.REACT_APP_API_URL;
+  const [currentSignupToken, setCurrentSignupToken] = useState();
+  const [resetToken, setResetToken] = useState();
   const navigate = useNavigate();
 
  
- useEffect(() => {
+  useEffect(() => {
+    console.log(formData)
+    setCurrentSignupToken(formData.signupToken);
+    console.log("Initial signup token:", currentSignupToken);
     const sendInitialOtp = async () => {
       if (!isOpen) return;
 
@@ -27,14 +32,9 @@ const OTPModal = ({
 
       try {
         if (mode === "forgot") {
-          await axios.post(
-            `${API_BASE_URL}/request-otp`,
-            { email },
-            { withCredentials: true }
-          );
-          console.log("Forgot password OTP sent");
+          const resOTP = await axios.post(`${API_BASE_URL}/request-otp`, { email });
+          setResetToken(resOTP.data.reset_token);
         }
-        // 👉 for signup, OTP is already sent during registration, so no resend here
       } catch (err) {
         console.error("Failed to send OTP:", err.response?.data || err.message);
       }
@@ -42,6 +42,7 @@ const OTPModal = ({
 
     sendInitialOtp();
   }, [isOpen, mode, email]);
+
 
   const handleInputChange = (index, value) => {
     if (value.length <= 1) {
@@ -76,17 +77,20 @@ const OTPModal = ({
     try {
       let res;
       if (mode === "signup") {
+        console.log("Verifying signup OTP with token:", currentSignupToken);
         res = await axios.post(
           `${API_BASE_URL}/verify-email`,
           { otp: otpString },
-          { withCredentials: true }
+          { headers: { Authorization: `Bearer ${currentSignupToken}` }, }
         );
         if (res.data.success) {
-          
+          alert("Email verified successfully!");
           if (onSuccess) onSuccess();
-          navigate("/");
+          navigate("/userLogin");
         }
       } else if (mode === "forgot") {
+
+
         if (!newPassword || !confirmPassword) {
           alert("Password and confirm password are required.");
           setIsLoading(false);
@@ -99,15 +103,15 @@ const OTPModal = ({
         }
         res = await axios.post(
           `${API_BASE_URL}/forgot-password`,
-          { otp: otpString, newPassword },
-          { withCredentials: true }
+          { otp: otpString, newPassword, reset_token: resetToken },
+          { headers: { Authorization: `Bearer ${resetToken}` } }
         );
         if (res.data.success) {
           if (onSuccess) onSuccess();
           alert("Password reset successfully!");
-          navigate("/");
+          navigate("/userLogin");
         }
-      }
+    }
     } catch (err) {
       alert(err.response?.data?.message || "Something went wrong.");
     }
@@ -127,14 +131,24 @@ const OTPModal = ({
   const handleResend = async () => {
     try {
       if (mode === "signup") {
-        const res = await axios.post(`${API_BASE_URL}/signup/resend-otp`, {}, { withCredentials: true });
-        alert(res.data.message || "New OTP sent!");
-        setCooldown(60); // start 60s cooldown
+        console.log("Reseend signup token:", currentSignupToken);
+        const res = await axios.post(
+          `${API_BASE_URL}/signup/resend-otp`,
+          {},
+          { headers: { Authorization: `Bearer ${currentSignupToken}` } } 
+        );
+
+        if (res.data.success) {
+          setCurrentSignupToken(res.data.signup_token); 
+          alert(res.data.message || "New OTP sent!");
+        }
       } else if (mode === "forgot") {
-        await axios.post(`${API_BASE_URL}/request-otp`, { email }, { withCredentials: true });
+        const res = await axios.post(`${API_BASE_URL}/request-otp`, { email });
+        setResetToken(res.data.reset_token); 
         alert("New reset OTP sent!");
-        setCooldown(60);
       }
+      setCooldown(60);
+      setOtp(["", "", "", "", "", ""]); // ✅ clear old OTP inputs
     } catch (err) {
       alert(err.response?.data?.message || "Failed to resend OTP.");
     }

@@ -23,31 +23,24 @@ export default function Login() {
 
 const handleSubmit = async (e) => {
   e.preventDefault();
-  console.log("API URL:", process.env.REACT_APP_API_URL);
+  console.log("API URL:", API_BASE_URL);
 
   try {
-    const res = await axios.post(
-      `${API_BASE_URL}/login`,
-      { 
-        email: formData.email, 
-        password: formData.password, 
-      },
-      { withCredentials: true }  // important for cookies/sessions
-    );
+    const res = await axios.post(`${API_BASE_URL}/login`, {
+      email: formData.email,
+      password: formData.password,
+    });
 
-    if (res.data.success) {
+    if (res.data.success && res.data.token) {
+      const token = res.data.token;
+      sessionStorage.setItem("token", token);
       navigate("/dashboard");
     } else {
-      alert(res.data.message); // correct reference
+      alert(res.data.message || "Login failed");
     }
   } catch (err) {
     console.error(err);
-
-    if (err.response?.data?.message) {
-      alert(err.response.data.message);
-    } else {
-      alert("Something went wrong. Try again.");
-    }
+    alert(err.response?.data?.message || "Something went wrong. Try again.");
   }
 };
 
