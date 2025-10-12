@@ -1,6 +1,7 @@
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, StratifiedKFold 
 from sklearn.neighbors import KNeighborsClassifier
-
+import numpy as np
+from tabulate import tabulate
 
 
 
@@ -19,18 +20,63 @@ class KNN:
         results["accuracy"] = acc      
         return results
 
-        
-        
-
     def calculate_k(self):
+        X = np.array(self.dataset_list)
+        y = np.array(self.strand_list)
+
         model = KNeighborsClassifier()
         param_grid = {'n_neighbors': [x for x in range(5, 11)]}
-        grid_search = GridSearchCV(model, param_grid, cv=5)
-        grid_search.fit(self.dataset_list, self.strand_list)
+        grid_search = GridSearchCV(model, param_grid, cv=5, return_train_score=False)
+        grid_search.fit(X, y)
+
+        # Best parameters
         k = grid_search.best_params_['n_neighbors']
         acc = grid_search.best_score_
-        print(f"K is {k}, Best Accuracy = {acc}")
-        return k, acc
+
+        print(f"\nBest K: {k}, Best Mean Accuracy: {acc:.4f}")
+
+        # ---- Accuracy summary ----
+        results = grid_search.cv_results_
+
+        # Table: mean ± std per k
+        summary_table = []
+        for mean, std, k_val in zip(results['mean_test_score'], results['std_test_score'], results['param_n_neighbors']):
+            summary_table.append([k_val, f"{mean:.4f} ± {std:.4f}"])
+
+        print("\nAccuracy per k (mean ± std):")
+        print(tabulate(summary_table, headers=["k", "Mean ± Std"], tablefmt="grid"))
+
+        # ---- Fold scores table ----
+        fold_scores_table = []
+        for i, k_val in enumerate(results['param_n_neighbors']):
+            fold_scores = [results[f"split{j}_test_score"][i] for j in range(5)]
+            fold_scores_table.append([k_val] + [f"{s:.4f}" for s in fold_scores] + [f"{np.mean(fold_scores):.4f}"])
+
+        fold_headers = ["k"] + [f"Fold {j+1}" for j in range(5)] + ["Average"]
+        print("\nAccuracy of each fold for each k:")
+        print(tabulate(fold_scores_table, headers=fold_headers, tablefmt="grid"))
+
+        # ---- Fold data splits ----
+        print("\nFold label counts (train/test) per fold:")
+        skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+        fold_data = []
+        for fold_idx, (train_idx, test_idx) in enumerate(skf.split(X, y), 1):
+            train_labels = y[train_idx]
+            test_labels = y[test_idx]
+            fold_info = {
+                "fold": fold_idx,
+                "train_labels": train_labels.tolist(),
+                "test_labels": test_labels.tolist()
+            }
+            fold_data.append(fold_info)
+            train_count = np.unique(train_labels, return_counts=True)
+            test_count = np.unique(test_labels, return_counts=True)
+            print(f"Fold {fold_idx}:")
+            print(f"  Train labels count: {dict(zip(train_count[0], train_count[1]))}")
+            print(f"  Test labels count: {dict(zip(test_count[0], test_count[1]))}")
+
+        return k, acc, results, fold_data
+
 
 
     def calculate_distance(self, knn):

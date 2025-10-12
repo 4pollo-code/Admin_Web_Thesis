@@ -117,9 +117,11 @@ def import_dataset():
 
         if len(X) >= 2:
             knn_runner = KNN(None, X, y)
-            best_k, accuracy = knn_runner.calculate_k()
+            best_k, accuracy, results, fold_data = knn_runner.calculate_k()
             dataset.best_k = best_k
             dataset.accuracy = float(accuracy)
+            print(results)
+            print(fold_data)
         else:
             dataset.best_k = 5
             dataset.accuracy = 1.0

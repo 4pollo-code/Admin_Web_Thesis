@@ -10,4 +10,6 @@ psycopg2-binary
 sendgrid
 certifi
 PyJWT
+tabulate
+numpy
 gunicorn

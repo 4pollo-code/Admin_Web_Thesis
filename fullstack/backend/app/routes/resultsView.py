@@ -24,6 +24,7 @@ def get_all_results():
             },
 
             "dataset": {
+                "data_set_id": dataset.data_set_id if dataset else None,
                 "data_set_name": dataset.data_set_name if dataset else None,
                 "created_at": dataset.created_at.isoformat() if dataset else None
             },

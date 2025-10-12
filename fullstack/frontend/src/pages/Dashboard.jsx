@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import { Edit } from "lucide-react"
 import "./css/dashboard.css";
 import Header from "../components/Header";
 import axios from "axios";
@@ -9,7 +10,16 @@ import { useNavigate } from "react-router-dom";
 import EditModal from "../components/EditModal";
 
 
-// ✅ Reusable confirmation modal
+function LoadingOverlay({ show, text }) {
+  if (!show) return null;
+  return (
+    <div className="loading-overlay">
+      <div className="spinner"></div>
+      <p>{text}</p>
+    </div>
+  );
+}
+
 function ConfirmModal({ show, title, message, onConfirm, onClose }) {
   if (!show) return null;
   return (
@@ -60,6 +70,8 @@ export default function Dashboard() {
     message: "",
     action: null,
   });
+  const [addingSet, setAddingSet] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [distribution, setDistribution] = useState([]);
   const [distMode, setDistMode] = useState("count"); 
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -146,8 +158,16 @@ export default function Dashboard() {
 
   const fetchDatasets = () => {
     axios
-      .get(`${API_BASE_URL}/datasets`, {headers: { Authorization: `Bearer ${token}` }})
-      .then((res) => setDatasets(res.data))
+      .get(`${API_BASE_URL}/datasets`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => {
+        setDatasets(res.data);
+
+        // ✅ Automatically select the active dataset
+        const activeDataset = res.data.find(ds => ds.status === "Active");
+        if (activeDataset) {
+          setSelectedDataset(activeDataset);
+        }
+      })
       .catch((err) => console.error("Error fetching datasets:", err));
   };
 
@@ -283,18 +303,15 @@ export default function Dashboard() {
     });
   };
 
-
-  // helper for showing arrow
   const getSortArrow = (key) => {
     if (sortConfig.key !== key) return "";
     return sortConfig.direction === "asc" ? " ▲" : " ▼";
   };
   
-
-  
-
   return (
     <div className="dashboard-container">
+      <LoadingOverlay show={addingSet} text="Adding Question Set..." />
+      <LoadingOverlay show={importing} text="Importing Dataset..." />
       <Header />
 
       <div className="main-content">
@@ -348,7 +365,7 @@ export default function Dashboard() {
                         <span>{set.question_set_name}</span>
                         <div className="item-actions">
                           <button
-                            className="btn btn-actions"
+                            className="btn btn-edit"
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedItem(set);
@@ -356,7 +373,7 @@ export default function Dashboard() {
                               setIsActionModalOpen(true);
                             }}
                           >
-                            Actions
+                            <Edit size={25} />                           
                           </button>
                         </div>
                       </li>
@@ -408,7 +425,7 @@ export default function Dashboard() {
                                 setIsActionModalOpen(true);
                               }}
                             >
-                              Actions
+                              <Edit size={25} />
                             </button>
                           </div>
                         </li>
@@ -627,18 +644,34 @@ export default function Dashboard() {
       <AddQuestionSetModal
         show={showModal}
         onClose={() => setShowModal(false)}
-        onSuccess={(newSet) =>
-          setQuestionSets([...questionSets, newSet])
-        }
+        onSuccess={async (newSet) => {
+          setAddingSet(true); // show loading
+          await new Promise(resolve => setTimeout(resolve, 50)); // let DOM update
+
+          try {
+            setQuestionSets(prev => [...prev, newSet]);
+          } finally {
+            setAddingSet(false);
+            setShowModal(false);
+          }
+        }}
       />
       <ImportDatasetModal
         show={showImportModal}
         onClose={() => setShowImportModal(false)}
         questionSets={questionSets}
-        onSuccess={(newDataset) =>
-          setDatasets([...datasets, newDataset])
-        }
-      />   
+        onSuccess={async (newDataset) => {
+          setImporting(true);
+          await new Promise(resolve => setTimeout(resolve, 50));
+
+          try {
+            setDatasets(prev => [...prev, newDataset]);
+          } finally {
+            setImporting(false);
+            setShowImportModal(false);
+          }
+        }}
+      />
       {/* Action Modal */}
       {isActionModalOpen && selectedItem && (
         <div className="modal-overlay">

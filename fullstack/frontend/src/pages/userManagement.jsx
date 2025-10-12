@@ -40,7 +40,15 @@ export default function UserManagementSystem() {
     }
     
   };
-  
+  const formatName = (name) => {
+    if (!name) return "";
+    return name
+      .toLowerCase()
+      .split(" ")
+      .filter(Boolean)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
 
   const fetchUsers = () => {
     axios.get(`${API_BASE_URL}/user-management`, {headers: { Authorization: `Bearer ${token}` }})
@@ -68,16 +76,46 @@ export default function UserManagementSystem() {
     setSelectedUser(null);
     setIsModalOpen(false);
   };
+  const handleCreate = async (data) => {
+    await axios.post(
+      `${API_BASE_URL}/user-management`,
+      data,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  };
 
+  const handleUpdate = async (data) => {
+    await axios.put(
+      `${API_BASE_URL}/user-management/${selectedUser.user_id}`,
+      data,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (selectedUser) {
-      await axios.put(`${API_BASE_URL}/${selectedUser.user_id}`,{headers: { Authorization: `Bearer ${token}` }}, formData);
-    } else {
-      await axios.post(`${API_BASE_URL}/user-management`,{headers: { Authorization: `Bearer ${token}` }}, formData);
+    try {
+      const formattedData = {
+        ...formData,
+        email: formData.email.toLowerCase(),
+        first_name: formatName(formData.first_name),
+        last_name: formatName(formData.last_name),
+        affix: formData.affix ? formatName(formData.affix) : "",
+      };
+
+      console.log("📤 Sending data:", formattedData); // <-- Verify in console
+
+      if (selectedUser) {
+        await handleUpdate(formattedData);
+      } else {
+        await handleCreate(formattedData);
+      }
+
+      fetchUsers();
+      closeModal();
+    } catch (err) {
+      console.error("Error saving user:", err);
+      alert("An error occurred while saving user data.");
     }
-    fetchUsers();
-    closeModal();
   };
 
   const handleDelete = async () => {

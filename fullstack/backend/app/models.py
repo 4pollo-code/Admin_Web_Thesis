@@ -40,11 +40,11 @@ class QuestionSet(db.Model):
     question_set_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     question_set_name = db.Column(db.String(120), nullable=False, unique=True)
     description = db.Column(db.String(120))
-    questions = db.relationship("Question", backref="set", cascade="all, delete-orphan")
     created_at = db.Column(db.DateTime, server_default=db.func.now())
-    last_updated = db.Column(
-        db.DateTime, server_default=db.func.now(), onupdate=db.func.now()
-    )
+    last_updated = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+
+    questions = db.relationship("Question", backref="set", cascade="all, delete-orphan")
+    datasets = db.relationship("DataSet", backref="question_set", cascade="all, delete-orphan")
 
     def question_set_info(self):
         return {
@@ -87,25 +87,15 @@ class DataSet(db.Model):
         db.ForeignKey("question_sets.question_set_id", onupdate="CASCADE", ondelete="CASCADE"),
         nullable=False,
     )
-    data_set_description = db.Column(
-        db.Text,
-        nullable=False,
-        default="Provide description for Data set"
-    )
-    last_updated = db.Column(
-        db.DateTime(timezone=True),
-        server_default=db.func.now(),
-        onupdate=db.func.now(),
-        nullable=False,
-    )
+    data_set_description = db.Column(db.Text, nullable=False,default="Provide description for Data set")
+    last_updated = db.Column(db.DateTime(timezone=True),server_default=db.func.now(),onupdate=db.func.now(),nullable=False,)
     status = db.Column(db.Text, nullable=False, default="Inactive")
     best_k = db.Column(db.BigInteger, nullable=False)
     accuracy = db.Column(db.Float, nullable=False)
 
     # Relationships
     data = db.relationship("Data", backref="data_set", cascade="all, delete-orphan")
-    question_set = db.relationship("QuestionSet", backref="datasets")
-
+    
     def data_set_info(self):
         return {
             "data_set_id": self.data_set_id,

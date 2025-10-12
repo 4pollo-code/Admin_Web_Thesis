@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/userManagement";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ResultsPage from "./pages/resultsPage"
+import CourseManagement from "./pages/courseManagement";
 
 import './App.css';
 
@@ -17,6 +18,8 @@ export default function App() {
         <Route path="/Dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/user-management" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} /> 
         <Route path="/results-page" element={<ProtectedRoute><ResultsPage /></ProtectedRoute>} /> 
+        <Route path="/results-page" element={<ProtectedRoute><ResultsPage /></ProtectedRoute>} /> 
+        <Route path="/course-management" element={<ProtectedRoute><CourseManagement /></ProtectedRoute>} /> 
       </Routes>
     </BrowserRouter>
   );

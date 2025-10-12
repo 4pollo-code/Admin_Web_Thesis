@@ -44,11 +44,6 @@ const handleSubmit = async (e) => {
   }
 };
 
-  const handleClose = () => {
-    console.log('Close modal');
-    // Handle modal close
-  };
-
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -60,7 +55,7 @@ const handleSubmit = async (e) => {
       <header className="login-header">
         <div className="logo-section">
           <div className="graduation-cap">🎓</div>
-          <h1 className="logo-text">PathFinder</h1>
+          <h1 className="logo-text">Strandify</h1>
         </div>
         <p className="management-text">Management</p>
       </header>
@@ -72,9 +67,6 @@ const handleSubmit = async (e) => {
             <User size={32} className="user-icon" />
             <Key size={16} className="key-icon" />
           </div>
-          <button className="close-btn" onClick={handleClose}>
-            <X size={24} />
-          </button>
         </div>
 
         <div className="login-form">

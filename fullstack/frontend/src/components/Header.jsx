@@ -1,38 +1,40 @@
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import React, { useState, useRef, useEffect } from "react";
 import { GraduationCap, User } from "lucide-react";
 import OTPModal from "../components/OTPModal";
 import "./css/Header.css";
 
-
-const Header = () => {
-  const [activeTab, setActiveTab] = useState("Dashboard");
-  const [underlineStyle, setUnderlineStyle] = useState({});
+const HeaderBar = () => {
+  const navigate = useNavigate();
+  const location = useLocation(); // track current path
   const navRefs = useRef({});
+
+  const [underlineStyle, setUnderlineStyle] = useState({});
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showChangePwModal, setShowChangePwModal] = useState(false);
+  const [showOTPModal, setShowOTPModal] = useState(false);
 
+  const [userInfo, setUserInfo] = useState(null);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const modalRef = useRef(null);
-  const navigate = useNavigate();
-  const [showOTPModal, setShowOTPModal] = useState(false);
-  const [userInfo, setUserInfo] = useState(null);
-  const getInitials = (first, last) => {
-    if (!first && !last) return "";
-    return `${first?.charAt(0) || ""}${last?.charAt(0) || ""}`.toUpperCase();
-  };
+
+  const token = sessionStorage.getItem("token");
+  const API_BASE_URL = process.env.REACT_APP_API_URL;
+
   const navItems = [
     { name: "Dashboard", path: "/dashboard" },
     { name: "User Management", path: "/user-management" },
+    { name: "Course Management", path: "/course-management" },
     { name: "Results View", path: "/results-page" },
   ];
-  const API_BASE_URL = process.env.REACT_APP_API_URL;
-  const token = sessionStorage.getItem("token");
 
+  // derive active tab from current URL
+  const activeTab =
+    navItems.find((item) => item.path === location.pathname)?.name || "Dashboard";
+
+  // underline positioning
   useEffect(() => {
     const currentTab = navRefs.current[activeTab];
     if (currentTab) {
@@ -41,9 +43,26 @@ const Header = () => {
         width: currentTab.offsetWidth,
       });
     }
-  }, [activeTab]);
+  }, [activeTab, location]);
 
-  // close profile dropdown when clicking outside
+  // fetch user info
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!token) return;
+      try {
+        const response = await axios.get(`${API_BASE_URL}/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUserInfo(response.data);
+      } catch (err) {
+        console.error("Error fetching user info:", err);
+      }
+    };
+    fetchUser();
+  }, [token]);
+
+  // close profile modal when clicking outside
+  const modalRef = useRef(null);
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -54,19 +73,7 @@ const Header = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/me`, { headers: { Authorization: `Bearer ${token}` }});
-        setUserInfo(response.data);
-        
-      } catch (error) {
-        console.error("Error fetching current user: ", error);
-      }
-    };
-    fetchUser();
-  }, []);
-  
+  // logout
   const handleLogout = async () => {
     try {
       const res = await axios.post(
@@ -74,41 +81,45 @@ const Header = () => {
         {},
         { withCredentials: true }
       );
-
       if (res.data.success) {
         navigate(res.data.redirect || "/login");
       }
     } catch (err) {
-      console.error("Logout failed", err);
+      console.error("Logout failed:", err);
       alert("Logout failed: " + (err.response?.data?.error || err.message));
     }
   };
 
-  const handleChangePassword = async () => {
-  if (!newPassword || !confirmPassword) {
-    alert("Please fill out all fields.");
-    return;
-  }
-  if (newPassword !== confirmPassword) {
-    alert("Passwords do not match.");
-    return;
-  }
+  // change password
+  const handleChangePassword = () => {
+    if (!newPassword || !confirmPassword) {
+      alert("Please fill out all fields.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+    setShowChangePwModal(false);
+    setShowOTPModal(true);
+  };
 
-  
-  setShowChangePwModal(false);
-  setShowOTPModal(true);
-};
+  // helper: get user initials
+  const getInitials = (first, last) => {
+    if (!first && !last) return "";
+    return `${first?.charAt(0) || ""}${last?.charAt(0) || ""}`.toUpperCase();
+  };
 
   return (
     <div className="dashboard-header">
+      {/* Logo & Profile */}
       <div className="header-content">
         <div className="logo-section">
           <GraduationCap size={32} color="white" />
-          <h1 className="logo-text">PathFinder</h1>
+          <h1 className="logo-text">Strandify</h1>
           <span className="logo-subtitle">Management</span>
         </div>
 
-        {/* Profile Dropdown */}
         <div className="user-avatar" ref={modalRef}>
           <button
             className="profile-btn"
@@ -125,7 +136,9 @@ const Header = () => {
 
           {showProfileModal && (
             <div className="profile-modal">
-              Hello {userInfo?.first_name} {userInfo?.last_name}!
+              <p>
+                Hello {userInfo?.first_name} {userInfo?.last_name}!
+              </p>
               <button onClick={() => setShowChangePwModal(true)}>
                 Change Password
               </button>
@@ -142,17 +155,14 @@ const Header = () => {
             key={item.name}
             ref={(el) => (navRefs.current[item.name] = el)}
             className={`nav-item ${activeTab === item.name ? "active" : ""}`}
-            onClick={() => setActiveTab(item.name)}
           >
-            <span>
-              <Link to={item.path}>{item.name}</Link>
-            </span>
+            <Link to={item.path}>{item.name}</Link>
           </div>
         ))}
         <div className="nav-underline" style={underlineStyle}></div>
       </div>
 
-      {/* Logout Confirmation Modal */}
+      {/* Logout Modal */}
       {showLogoutModal && (
         <div className="modal-overlay">
           <div className="modal">
@@ -183,25 +193,24 @@ const Header = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
-            
             <div className="modal-actions">
-              <button onClick={() => setShowChangePwModal(false)}>
-                Cancel
-              </button>
+              <button onClick={() => setShowChangePwModal(false)}>Cancel</button>
               <button onClick={handleChangePassword}>Submit</button>
             </div>
           </div>
         </div>
       )}
+
+      {/* OTP Modal */}
       {showOTPModal && (
         <OTPModal
           isOpen={showOTPModal}
           onClose={() => setShowOTPModal(false)}
           mode="forgot"
-          formData={{ 
-            email: "user@example.com", // replace with logged-in user’s email
+          formData={{
+            email: userInfo?.email || "user@example.com",
             newPassword,
-            confirmPassword
+            confirmPassword,
           }}
           onSuccess={() => {
             setShowOTPModal(false);
@@ -215,4 +224,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default HeaderBar;

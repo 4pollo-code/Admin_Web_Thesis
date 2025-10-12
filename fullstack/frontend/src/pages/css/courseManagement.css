@@ -1,16 +1,16 @@
 /* ================= USER MANAGEMENT STYLES ================= */
 
-.user-management-container {
+.course-management-container {
   min-height: 100vh;
   background: #ffffff; /* white background */
   font-family: 'Inter', sans-serif;
 }
 
-.user-management-container .main-content {
+.course-management-container .main-content {
   padding: 2rem;
 }
 
-.user-management-container .page-header {
+.course-management-container .page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -18,20 +18,20 @@
   flex-wrap: wrap;
 }
 
-.user-management-container .header-left {
+.course-management-container .header-left {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.user-management-container .page-title {
+.course-management-container .page-title {
   font-size: 1.5rem;
   font-weight: bold;
   color: #062474;
   margin: 0;
 }
 
-.user-management-container .header-right {
+.course-management-container .header-right {
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
@@ -41,7 +41,7 @@
   flex-wrap: wrap;
 }
 
-.user-management-container .nav-button {
+.course-management-container .nav-button {
   padding: 0.5rem;
   color: #062474;
   background: none;
@@ -50,16 +50,16 @@
   transition: color 0.2s ease;
 }
 
-.user-management-container .nav-button:hover {
+.course-management-container .nav-button:hover {
   color: #1d4ed8;
 }
 
-.user-management-container .search-container {
+.course-management-container .search-container {
   position: relative;
   flex: 1;
 }
 
-.user-management-container .btn-add {
+.course-management-container .btn-add {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -74,7 +74,7 @@
   transition: all 0.3s ease;
 }
 
-.user-management-container .search-icon {
+.course-management-container .search-icon {
   position: absolute;
   left: 1rem;
   top: 50%;
@@ -82,7 +82,7 @@
   color: #9ca3af;
 }
 
-.user-management-container .search-input {
+.course-management-container .search-input {
   width: 16rem;
   background-color: rgba(6, 36, 116, 0.05);
   color: #062474;
@@ -93,13 +93,13 @@
   font-size: 1rem;
 }
 
-.user-management-container .search-input::placeholder {
+.course-management-container .search-input::placeholder {
   color: #6b7280;
 }
 
 /* ================= Table ================= */
 
-.user-management-container .user-table {
+.course-management-container .user-table {
   background-color: #ffffff;
   border-radius: 0.5rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
@@ -108,13 +108,13 @@
   border: 1px solid #e5e7eb;
 }
 
-.user-management-container .table-header {
+.course-management-container .table-header {
   display: grid;
-  grid-template-columns: 1fr 1fr 2fr 1fr 0.5fr;
+  grid-template-columns: 5fr 1fr;
   background-color: #1c1a4a;
 }
 
-.user-management-container .header-cell {
+.course-management-container .header-cell {
   padding: 1.5rem;
   text-align: center;
   color: white;
@@ -122,50 +122,50 @@
   cursor: pointer;
 }
 
-.user-management-container .header-cell:not(:first-child) {
+.course-management-container .header-cell:not(:first-child) {
   border-left: 1px solid #1d4ed8;
 }
 
-.user-management-container .header-title {
+.course-management-container .header-title {
   color: white;
   font-weight: 600;
 }
 
-.user-management-container .table-body {
+.course-management-container .table-body {
   border-top: 1px solid #e5e7eb;
 }
 
-.user-management-container .table-row {
+.course-management-container .table-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 2fr 1fr 0.5fr;
+  grid-template-columns: 5fr 1fr;
   transition: background-color 0.2s ease;
 }
 
-.user-management-container .table-row:not(:last-child) {
+.course-management-container .table-row:not(:last-child) {
   border-bottom: 1px solid #e5e7eb;
 }
 
-.user-management-container .table-row:hover {
+.course-management-container .table-row:hover {
   background-color: rgba(6, 36, 116, 0.05);
 }
 
-.user-management-container .table-cell {
+.course-management-container .table-cell {
   padding: 1.5rem;
   text-align: center;
   color: #062474;
 }
 
-.user-management-container .table-cell:not(:first-child) {
+.course-management-container .table-cell:not(:first-child) {
   border-left: 1px solid #e5e7eb;
 }
 
-.user-management-container .cell-text {
+.course-management-container .cell-text {
   font-size: 1.125rem;
 }
 
 /* ================= Footer ================= */
 
-.user-management-container .table-footer {
+.course-management-container .table-footer {
   margin-top: 1.5rem;
   display: flex;
   justify-content: space-between;
@@ -173,17 +173,17 @@
   flex-wrap: wrap;
 }
 
-.user-management-container .footer-info {
+.course-management-container .footer-info {
   color: #6b7280;
 }
 
-.user-management-container .pagination {
+.course-management-container .pagination {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
 
-.user-management-container .pagination-button {
+.course-management-container .pagination-button {
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   border: none;
@@ -192,27 +192,27 @@
   font-size: 0.875rem;
 }
 
-.user-management-container .pagination-button.primary {
+.course-management-container .pagination-button.primary {
   background-color: #062474;
   color: white;
 }
 
-.user-management-container .pagination-button.primary:hover {
+.course-management-container .pagination-button.primary:hover {
   background-color: #1d4ed8;
 }
 
-.user-management-container .pagination-button.active {
+.course-management-container .pagination-button.active {
   background-color: #f59e0b;
   color: white;
 }
 
-.user-management-container .pagination-button.active:hover {
+.course-management-container .pagination-button.active:hover {
   background-color: #d97706;
 }
 
 /* ================= Buttons ================= */
 
-.user-management-container .edit-btn {
+.course-management-container .edit-btn {
   background: none;
   border: 1px solid #062474;
   color: #062474;
@@ -225,14 +225,14 @@
   justify-content: center;
 }
 
-.user-management-container .edit-btn:hover {
+.course-management-container .edit-btn:hover {
   background: rgba(6, 36, 116, 0.1);
   transform: scale(1.05);
 }
 
 /* ================= Modal ================= */
 
-.user-management-container .modal-overlay {
+.course-management-container .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -253,7 +253,7 @@
   to { opacity: 1; }
 }
 
-.user-management-container .modal {
+.course-management-container .modal {
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(6, 36, 116, 0.25);
@@ -271,7 +271,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-.user-management-container .modal h2 {
+.course-management-container .modal h2 {
   color: #062474;
   font-size: 1.5rem;
   font-weight: 700;
@@ -281,14 +281,14 @@
   background: linear-gradient(135deg, rgba(6, 36, 116, 0.02) 0%, rgba(6, 36, 116, 0.05) 100%);
 }
 
-.user-management-container .modal-form {
+.course-management-container .modal-form {
   padding: 1rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
 }
 
-.user-management-container .modal-form label {
+.course-management-container .modal-form label {
   color: #062474;
   font-weight: 600;
   font-size: 0.9rem;
@@ -298,8 +298,8 @@
   letter-spacing: 0.3px;
 }
 
-.user-management-container .modal-form input,
-.user-management-container .modal-form select {
+.course-management-container .modal-form input,
+.course-management-container .modal-form select {
   width: 100%;
   padding: 0.5rem 0.75rem;
   border: 2px solid #e5e7eb;
@@ -311,25 +311,25 @@
   box-sizing: border-box;
 }
 
-.user-management-container .modal-form input:focus,
-.user-management-container .modal-form select:focus {
+.course-management-container .modal-form input:focus,
+.course-management-container .modal-form select:focus {
   outline: none;
   border-color: #062474;
   box-shadow: 0 0 0 3px rgba(6, 36, 116, 0.1);
 }
 
-.user-management-container .modal-form input::placeholder {
+.course-management-container .modal-form input::placeholder {
   color: #9ca3af;
 }
 
-.user-management-container .modal-form input:disabled,
-.user-management-container .modal-form select:disabled {
+.course-management-container .modal-form input:disabled,
+.course-management-container .modal-form select:disabled {
   background: #f3f4f6;
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-.user-management-container .modal-actions {
+.course-management-container .modal-actions {
   display: flex;
   gap: 0.75rem;
   margin-top: 0.5rem;
@@ -338,7 +338,7 @@
   flex-wrap: wrap;
 }
 
-.user-management-container .modal-actions button {
+.course-management-container .modal-actions button {
   flex: 1;
   padding: 0.6rem 1rem;
   border: none;
@@ -351,37 +351,37 @@
   letter-spacing: 0.3px;
 }
 
-.user-management-container .btn-save {
+.course-management-container .btn-save {
   background: green;
   color: white;
   box-shadow: 0 2px 8px rgba(6, 36, 116, 0.2);
 }
 
-.user-management-container .btn-save:hover {
-  background: rgb(9, 180, 9);
+.course-management-container .btn-save:hover {
+  background: green;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(6, 36, 116, 0.3);
 }
 
-.user-management-container .btn-delete {
+.course-management-container .btn-delete {
   background: #dc2626;
   color: white;
   box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
 }
 
-.user-management-container .btn-delete:hover {
+.course-management-container .btn-delete:hover {
   background: #b91c1c;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
-.user-management-container .btn-cancel {
+.course-management-container .btn-cancel {
   background: #f3f4f6;
   color: #4b5563;
   border: 2px solid #e5e7eb;
 }
 
-.user-management-container .btn-cancel:hover {
+.course-management-container .btn-cancel:hover {
   background: #e5e7eb;
   border-color: #d1d5db;
 }
@@ -389,130 +389,184 @@
 /* ================= Responsive ================= */
 
 @media (max-width: 1024px) {
-  .user-management-container .table-header,
-  .user-management-container .table-row {
+  .course-management-container .table-header,
+  .course-management-container .table-row {
     grid-template-columns: 1fr 1fr 1.5fr 1fr 60px;
   }
 
-  .user-management-container .page-title {
+  .course-management-container .page-title {
     font-size: 1.25rem;
   }
 
-  .user-management-container .header-title {
+  .course-management-container .header-title {
     font-size: 1rem;
   }
 }
 
 @media (max-width: 768px) {
-  .user-management-container .page-header {
+  .course-management-container .page-header {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
   }
 
-  .user-management-container .header-right {
+  .course-management-container .header-right {
     justify-content: space-between;
     flex-wrap: wrap;
   }
 
-  .user-management-container .search-input {
+  .course-management-container .search-input {
     width: 100%;
   }
 
-  .user-management-container .user-table {
+  .course-management-container .user-table {
     font-size: 0.9rem;
   }
 
-  .user-management-container .table-header,
-  .user-management-container .table-row {
+  .course-management-container .table-header,
+  .course-management-container .table-row {
     grid-template-columns: 1fr;
   }
 
-  .user-management-container .header-cell,
-  .user-management-container .table-cell {
+  .course-management-container .header-cell,
+  .course-management-container .table-cell {
     text-align: left;
     padding: 1rem;
     border: none;
   }
 
-  .user-management-container .header-cell:not(:first-child),
-  .user-management-container .table-cell:not(:first-child) {
+  .course-management-container .header-cell:not(:first-child),
+  .course-management-container .table-cell:not(:first-child) {
     border-left: none;
     border-top: 1px solid #e5e7eb;
   }
 
-  .user-management-container .table-footer {
+  .course-management-container .table-footer {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
   }
 
-  .user-management-container .modal {
+  .course-management-container .modal {
     max-width: 95%;
   }
 
-  .user-management-container .modal h2 {
+  .course-management-container .modal h2 {
     font-size: 1.5rem;
     padding: 1.5rem 1.5rem 1rem 1.5rem;
   }
 
-  .user-management-container .modal-form {
+  .course-management-container .modal-form {
     padding: 1.5rem;
   }
 
-  .user-management-container .modal-actions {
+  .course-management-container .modal-actions {
     flex-direction: column;
   }
 
-  .user-management-container .modal-actions button {
+  .course-management-container .modal-actions button {
     width: 100%;
   }
 }
 
 @media (max-width: 480px) {
-  .user-management-container .main-content {
+  .course-management-container .main-content {
     padding: 1rem;
   }
 
-  .user-management-container .page-title {
+  .course-management-container .page-title {
     font-size: 1rem;
   }
 
-  .user-management-container .btn-add {
+  .course-management-container .btn-add {
     width: 100%;
     justify-content: center;
   }
 
-  .user-management-container .pagination {
+  .course-management-container .pagination {
     justify-content: center;
   }
 
-  .user-management-container .search-input {
+  .course-management-container .search-input {
     font-size: 0.9rem;
   }
 
-  .user-management-container .table-cell {
+  .course-management-container .table-cell {
     padding: 0.75rem;
   }
 
-  .user-management-container .modal {
+  .course-management-container .modal {
     max-width: 100%;
     border-radius: 12px;
   }
 
-  .user-management-container .modal h2 {
+  .course-management-container .modal h2 {
     font-size: 1.35rem;
     padding: 1.25rem;
   }
 
-  .user-management-container .modal-form {
+  .course-management-container .modal-form {
     padding: 1.25rem;
     gap: 1rem;
   }
 
-  .user-management-container .modal-form input,
-  .user-management-container .modal-form select {
+  .course-management-container .modal-form input,
+  .course-management-container .modal-form select {
     padding: 0.75rem;
     font-size: 0.95rem;
   }
+}
+/* Actions Column Buttons */
+.actions-cell {
+  display: flex;
+  justify-content: center; /* center horizontally */
+  align-items: center;
+  gap: 0.5rem; /* space between Edit and Delete */
+}
+
+.edit-btn,
+.delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Edit Button */
+.edit-btn {
+  background-color: #062474;
+  color: white;
+  border: none;
+  gap: 0.25rem;
+}
+
+.edit-btn:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(6, 36, 116, 0.3);
+}
+
+/* Delete Button */
+.delete-btn {
+  background-color: #dc2626; /* red */
+  color: white;
+  border: none;
+  gap: 0.25rem;
+}
+
+.delete-btn:hover {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+}
+
+.delete-btn:active,
+.edit-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
 }

@@ -104,11 +104,14 @@ def get_questions_for_set(set_id):
 
 @question_sets_bp.route("/question-sets/<int:set_id>", methods=["DELETE"])
 def delete_question_set(set_id):
+    print("hit")
     s = QuestionSet.query.get_or_404(set_id)
+    print(s)
     try:
         db.session.delete(s)
         db.session.commit()
         return jsonify({"message": f"Question set {set_id} deleted"}), 200
     except SQLAlchemyError as e:
         db.session.rollback()
+        print(e)
         return jsonify({"error": str(e)}), 400

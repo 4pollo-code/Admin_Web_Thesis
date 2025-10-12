@@ -39,6 +39,8 @@ def create_app():
     from app.routes.cron_job import cron_bp
     app.register_blueprint(cron_bp)
     
+    from app.routes.courseManagement import course_bp
+    app.register_blueprint(course_bp)
     frontend_url = os.getenv("FRONTEND_URL")  
     CORS(
         app,

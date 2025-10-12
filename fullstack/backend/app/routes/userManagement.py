@@ -46,6 +46,7 @@ def delete(chosen_id):
 def update(chosen_id):
     try:
         data = request.get_json()
+        print(data)
         user = User.query.get(chosen_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
@@ -61,6 +62,7 @@ def update(chosen_id):
         return jsonify({"message": "User updated successfully"}), 200
     except Exception as e:
         db.session.rollback()
+        print(e)
         return jsonify({"error": f"Failed to Update User: {str(e)}"}), 500
 
 
