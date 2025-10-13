@@ -49,50 +49,75 @@ def import_dataset():
         rows = data.get("rows", [])
 
         if not dataset_name or not question_set_id or not rows:
+            print("❌ Missing data:", {
+                "dataset_name": dataset_name,
+                "question_set_id": question_set_id,
+                "rows_count": len(rows)
+            })
             return jsonify({"error": "Missing dataset_name, question_set_id, or rows"}), 400
 
-        # Fetch questions
+        print(f"📥 Importing dataset: {dataset_name}")
+        print(f"➡️ Total rows received: {len(rows)}")
+        print(f"➡️ Columns in first row: {list(rows[0].keys())}")
+
+        # --- Fetch questions from DB ---
         questions = Question.query.filter_by(set_id=question_set_id).all()
+        print(f"📚 Questions found in DB for set {question_set_id}: {len(questions)}")
+
         if not questions:
             return jsonify({"error": "No questions found for this question set"}), 400
 
         db_questions = {normalize(q.question_text): q.strand for q in questions}
+        print(f"🧩 Normalized DB questions: {list(db_questions.keys())[:5]} ...")
 
-        # ✅ Collect normalized file questions (skip "STRAND")
+        # --- Normalize file columns ---
         file_questions = [q for q in rows[0].keys() if normalize(q) != "strand"]
         norm_file_questions = {normalize(q) for q in file_questions}
+        print(f"📄 Questions found in file: {len(norm_file_questions)}")
+        print(f"🧠 Normalized file questions sample: {list(norm_file_questions)[:5]}")
 
+        # --- Check mismatches ---
         missing_in_file = set(db_questions.keys()) - norm_file_questions
         extra_in_file = norm_file_questions - set(db_questions.keys())
 
-        if missing_in_file or extra_in_file:
+        print(f"⚠️ Missing questions in file: {len(missing_in_file)}")
+        print(f"⚠️ Extra questions in file: {len(extra_in_file)}")
+
+      
+
+        # --- Stop if any validation issues exist ---
+        if missing_in_file:
+            print("❌ Import failed — missing required columns or Strand values.")
             return jsonify({
-                "error": "Mismatch in questions detected",
-                "missing_in_file": list(missing_in_file),
-                "extra_in_file": list(extra_in_file)
+                "error": "Import failed due to missing questions or Strand values.",
+                "missing_questions": list(missing_in_file),
             }), 400
 
-        # ✅ Step 1: Create dataset with placeholder values (flush only)
+        # --- Log but ignore extra questions ---
+        if extra_in_file:
+            print(f"⚠️ Ignoring {len(extra_in_file)} extra question(s) not in DB: {list(extra_in_file)[:5]}")
+
+        # --- Continue import only if everything is valid ---
         dataset = DataSet(
             data_set_name=dataset_name,
             data_set_description=description,
             question_set_id=question_set_id,
-            best_k=0,      # temporary
-            accuracy=0.0   # temporary
+            best_k=0,
+            accuracy=0.0
         )
         db.session.add(dataset)
-        db.session.flush()  # ensures dataset_id is available
+        db.session.flush()
 
-        # ✅ Step 2: Process rows into Data
         strand_entries = []
         for row in rows:
             strand_label = row.get("Strand", "").strip()
             totals = {"STEM": 0, "ABM": 0, "HUMSS": 0}
 
             for question, value in row.items():
-                if normalize(question) == "strand":
-                    continue
                 norm_q = normalize(question)
+                if norm_q == "strand" or norm_q not in db_questions:
+                    continue
+
                 strand = db_questions.get(norm_q)
                 if strand in totals:
                     try:
@@ -110,7 +135,9 @@ def import_dataset():
             db.session.add(entry)
             strand_entries.append(entry.data_info())
 
-        # ✅ Step 3: Calculate KNN before commit
+        print(f"✅ Successfully processed {len(strand_entries)} rows with strand labels")
+
+        # --- Run KNN ---
         from app.services.KNN import KNN
         X = [[r["stem_score"], r["abm_score"], r["humss_score"]] for r in strand_entries]
         y = [r["strand"] for r in strand_entries]
@@ -120,14 +147,13 @@ def import_dataset():
             best_k, accuracy, results, fold_data = knn_runner.calculate_k()
             dataset.best_k = best_k
             dataset.accuracy = float(accuracy)
-            print(results)
-            print(fold_data)
         else:
             dataset.best_k = 5
             dataset.accuracy = 1.0
 
-        # ✅ Step 4: Commit once at the end
         db.session.commit()
+
+        print(f"✅ Import complete — K={dataset.best_k}, Accuracy={dataset.accuracy:.2f}")
 
         return jsonify({
             "success": True,
@@ -139,8 +165,6 @@ def import_dataset():
         db.session.rollback()
         print("❌ Error during import:", str(e))
         return jsonify({"error": str(e)}), 500
-
-
 
 
 @dataset_bp.route("/datasets/<int:data_set_id>", methods=["DELETE"])

@@ -44,7 +44,11 @@ const AssessmentResults = () => {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Modal states for PDF preview
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedExportDataset, setSelectedExportDataset] = useState("all");
+  const datasetNames = [
+    ...new Set(results.map((r) => r.dataset?.data_set_name || "Unknown")),
+  ];
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
 
@@ -142,16 +146,74 @@ const AssessmentResults = () => {
     return matchesSearch && matchesStrand && matchesDataset;
   });
 
-  // --------------------------
-  // Pagination
-  // --------------------------
+
   const totalPages = Math.ceil(filteredResults.length / ROWS_PER_PAGE);
   const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
   const paginatedResults = filteredResults.slice(startIndex, startIndex + ROWS_PER_PAGE);
 
-  // --------------------------
-  // PDF Export Functions
-  // --------------------------
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+
+  const handleDownload = () => {
+    let filteredResults;
+
+    if (selectedExportDataset === "all") {
+      filteredResults = results;
+    } else {
+      filteredResults = results.filter(
+        (r) => (r.dataset?.data_set_name || "") === selectedExportDataset
+      );
+    }
+
+    if (filteredResults.length === 0) {
+      alert(`No results found for dataset "${selectedExportDataset}".`);
+      return;
+    }
+
+    const sortedResults = [...filteredResults].sort((a, b) => {
+      const lastA = (a.user_data?.name || "").trim().split(" ").pop().toLowerCase();
+      const lastB = (b.user_data?.name || "").trim().split(" ").pop().toLowerCase();
+      return lastA.localeCompare(lastB);
+    });
+
+    const doc = new jsPDF();
+    const titleText =
+      selectedExportDataset === "all"
+        ? "All Assessment Results"
+        : `Assessment Results - ${selectedExportDataset}`;
+    doc.setFontSize(16);
+    doc.text(titleText, 14, 15);
+
+    const tableBody = sortedResults.map((r, index) => [
+      index + 1,
+      r.user_data?.name || "N/A",
+      r.recommended_strand || "N/A",
+      r.assessment_info?.abm_total?.toFixed(2) || "0.00",
+      r.assessment_info?.stem_total?.toFixed(2) || "0.00",
+      r.assessment_info?.humss_total?.toFixed(2) || "0.00",
+      r.dataset?.data_set_name || "N/A",
+      new Date(r.created_at).toLocaleDateString(),
+    ]);
+
+    autoTable(doc, {
+      startY: 25,
+      head: [["#", "Name", "Recommendation", "ABM", "STEM", "HUMSS", "Dataset", "Date"]],
+      body: tableBody,
+      theme: "grid",
+      headStyles: { fillColor: [41, 128, 185] },
+      styles: { fontSize: 10 },
+    });
+
+    const fileName =
+      selectedExportDataset === "all"
+        ? "all_assessment_results_table.pdf"
+        : `${selectedExportDataset.replace(/\s+/g, "_")}_results.pdf`;
+    doc.save(fileName);
+
+    closeModal();
+  };
+
+
   const exportIndividualPDF = (result) => {
     const doc = new jsPDF();
     let y = 20;
@@ -224,83 +286,6 @@ const AssessmentResults = () => {
     doc.save(`${result.user_data?.name}-assessment-full.pdf`);
   };
 
-  const exportAllResultsPDF = (results) => {
-    const doc = new jsPDF();
-    let y = 20;
-
-    results.forEach((result, idx) => {
-      if (idx > 0) doc.addPage();
-      y = 20;
-
-      doc.setFontSize(16);
-      doc.text(`${result.user_data?.name} - Assessment Result`, 14, y);
-      y += 10;
-
-      doc.setFontSize(12);
-      doc.text(`Email: ${result.user_data?.email}`, 14, y);
-      y += 7;
-      doc.text(`Assessment Date: ${new Date(result.created_at).toLocaleString()}`, 14, y);
-      y += 7;
-      doc.text(`Dataset: ${result.dataset?.data_set_name}`, 14, y);
-      y += 7;
-      doc.text(`Recommended Strand: ${result.recommended_strand}`, 14, y);
-      if (result.tie) {
-        doc.text(`TIE: Yes`, 14, y + 7);
-        y += 7;
-      }
-      y += 10;
-
-      autoTable(doc, {
-        startY: y,
-        head: [['Strand', 'Score']],
-        body: [
-          ['STEM', result.stem_score],
-          ['ABM', result.abm_score],
-          ['HUMSS', result.humss_score],
-        ],
-        theme: 'grid',
-        headStyles: { fillColor: [41, 128, 185] },
-      });
-
-      y = doc.lastAutoTable.finalY + 10;
-
-      if (result.tie_info) {
-        doc.text("Tie Resolution Weights", 14, y);
-        y += 5;
-        autoTable(doc, {
-          startY: y,
-          head: [['Strand', 'Weighted Distance']],
-          body: Object.entries(result.tie_info).map(([strand, weight]) => [
-            strand.replace("_weight", "").toUpperCase(),
-            weight != null ? Number(weight).toFixed(3) : 'N/A',
-          ]),
-          theme: 'grid',
-        });
-        y = doc.lastAutoTable.finalY + 10;
-      }
-
-      if (result.neighbors?.length > 0) {
-        doc.text("Closest Matches", 14, y);
-        y += 5;
-        const neighborsData = result.neighbors
-          .slice()
-          .sort((a, b) => a.distance - b.distance)
-          .map((n, index) => [index + 1, n.strand, n.distance.toFixed(3)]);
-        autoTable(doc, {
-          startY: y,
-          head: [['#', 'Strand', 'Distance']],
-          body: neighborsData,
-          theme: 'grid',
-        });
-      }
-    });
-
-    doc.save("all-assessment-results.pdf");
-  };
-
-  // --------------------------
-  // Loading & Error States
-  // --------------------------
   if (loading)
     return (
       <div className="loading-container">
@@ -360,10 +345,9 @@ const AssessmentResults = () => {
             <button className="refresh-btn" onClick={fetchResults}>
               <RefreshCw />
             </button>
-
-            <button className="download-all-btn" onClick={() => exportAllResultsPDF(filteredResults)}>
-              <Download /> Download All
-            </button>
+              <button className="download-all-btn" onClick={openModal}>
+                📄 Download All
+              </button>
           </div>
         </div>
 
@@ -744,6 +728,37 @@ const AssessmentResults = () => {
           </div>
         </div>
       )}
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2>Select Dataset</h2>
+
+            <select
+              value={selectedExportDataset}
+              onChange={(e) => setSelectedExportDataset(e.target.value)}
+              className="dataset-select"
+            >
+              <option value="all">All Datasets</option>
+              {datasetNames.map((name, idx) => (
+                <option key={idx} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+
+            <div className="modal-actions">
+              <button onClick={handleDownload} className="confirm-btn">
+                Download
+              </button>
+              <button onClick={closeModal} className="cancel-btn">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

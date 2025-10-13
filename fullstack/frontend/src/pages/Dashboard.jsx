@@ -56,20 +56,23 @@ export default function Dashboard() {
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [originalRecords, setOriginalRecords] = useState([]);
+  const [deleteLoadig, setDeleteLoadig] = useState(false);
   const [originalQuestions, setOriginalQuestions] = useState([]);
+  const [activatingDatasetId, setActivatingDatasetId] = useState(null);
   const navigate = useNavigate();
   const API_BASE_URL = process.env.REACT_APP_API_URL;
   const token = sessionStorage.getItem('token');
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [editType, setEditType] = useState(null); 
-  const [confirmModal, setConfirmModal] = useState({
-    show: false,
-    title: "",
-    message: "",
-    action: null,
-  });
+  const [confirmModal, setConfirmModal] = useState({show: false, title: "", message: "", action: null,});
+  const [deletingItemType, setDeletingItemType] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [searchQuestionSet, setSearchQuestionSet] = useState("");
+  const [searchDataset, setSearchDataset] = useState("");
   const [addingSet, setAddingSet] = useState(false);
   const [importing, setImporting] = useState(false);
   const [distribution, setDistribution] = useState([]);
@@ -130,6 +133,14 @@ export default function Dashboard() {
     fetchQuestionSets();
     fetchDatasets();
     checkToken()
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [datasets, searchQuery]);
+
+  useEffect(() => {
+    setSortConfig({ key: "data_set_name", direction: "asc" });
   }, []);
 
   const checkToken = async () => {
@@ -248,29 +259,63 @@ export default function Dashboard() {
 
 
   const handleDeleteDataset = async (id) => {
-    await axios.delete(`${API_BASE_URL}/datasets/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-    setSelectedDataset(null);
-    fetchDatasets();
+    try {
+      setDeletingItemType("dataset");
+      setDeleteLoadig(true); // start loading
+      // Delete dataset
+      await axios.delete(`${API_BASE_URL}/datasets/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setSelectedDataset(null);
+
+      await fetchDatasets();
+    } catch (err) {
+      console.error("Error deleting dataset:", err);
+    } finally {
+      setDeleteLoadig(false); // stop loading regardless of success/error
+      setDeletingItemType("");
+    }
   };
 
+
   const handleDeleteQuestionSet = async (id) => {
-    await axios.delete(`${API_BASE_URL}/question-sets/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-    setSelectedSet(null);
-    fetchQuestionSets();
+    try {
+      setDeletingItemType("question set");
+      setDeleteLoadig(true); // start loading
+      // Delete the question set
+      await axios.delete(`${API_BASE_URL}/question-sets/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setSelectedSet(null);
+
+      // Refresh the list
+      await fetchQuestionSets();
+    } catch (err) {
+      console.error("Error deleting question set:", err);
+    } finally {
+      setDeleteLoadig(false); // stop loading
+      setDeletingItemType("");
+    }
   };
 
   const handleActivateDataset = async (dataset) => {
+    setActivatingDatasetId(dataset.data_set_id); // start loading
     try {
       await axios.put(
         `${API_BASE_URL}/activate/${dataset.data_set_id}`,
-        { status: "Active" }, 
+        { status: "Active" },
         { headers: { "Content-Type": "application/json" } }
       );
-      fetchDatasets();
+      await fetchDatasets(); // refresh list
     } catch (err) {
       console.error("Error activating dataset:", err);
+    } finally {
+      setActivatingDatasetId(null); // stop loading
     }
   };
+
   const handleSort = (key) => {
     let direction = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
@@ -278,7 +323,6 @@ export default function Dashboard() {
     }
     setSortConfig({ key, direction });
   };
-
   const sortData = (data) => {
     if (!sortConfig.key) return data;
 
@@ -303,6 +347,31 @@ export default function Dashboard() {
     });
   };
 
+  const getSortedDatasetsForModal = () => {
+    // Separate active datasets from inactive
+    const activeDatasets = datasets.filter(ds => ds.status === "Active");
+    const inactiveDatasets = datasets.filter(ds => ds.status !== "Active");
+
+    // Sort only the inactive datasets based on sortConfig
+    if (sortConfig.key) {
+      inactiveDatasets.sort((a, b) => {
+        const valA = a[sortConfig.key] ?? "";
+        const valB = b[sortConfig.key] ?? "";
+
+        if (typeof valA === "number" && typeof valB === "number") {
+          return sortConfig.direction === "asc" ? valA - valB : valB - valA;
+        }
+
+        return sortConfig.direction === "asc"
+          ? valA.toString().localeCompare(valB.toString())
+          : valB.toString().localeCompare(valA.toString());
+      });
+    }
+
+    // Return Active first, then sorted inactive
+    return [...activeDatasets, ...inactiveDatasets];
+  };
+
   const getSortArrow = (key) => {
     if (sortConfig.key !== key) return "";
     return sortConfig.direction === "asc" ? " ▲" : " ▼";
@@ -322,28 +391,23 @@ export default function Dashboard() {
           >
             Activate Dataset
           </button>
-          <input
-            type="text"
-            placeholder="Search datasets..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ padding: "0.4rem 0.8rem", borderRadius: "6px", border: "1px solid #ccc", width: "250px" }}
-          />
         </div>
 
         <div className="top-section">
           {/* Question Sets */}
           <div className="card question-set">
-            <div className="card-header">
+            <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h2>Question Sets</h2>
-              <button
-                className="btn btn-primary"
-                onClick={() => setShowModal(true)}
-              >
-                Add Question Set
-              </button>
-
-              
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <input
+                  type="text"
+                  placeholder="Search question sets..."
+                  value={searchQuestionSet}
+                  onChange={(e) => setSearchQuestionSet(e.target.value)}
+                  style={{ padding: "0.4rem 0.8rem", borderRadius: "6px", border: "1px solid #ccc", width: "180px" }}
+                />
+                <button className="btn btn-primary" onClick={() => setShowModal(true)}>Add Question Set</button>
+              </div>
             </div>
             <div className="card-body">
               <div className="item-container">
@@ -351,7 +415,9 @@ export default function Dashboard() {
                   <p>No question sets available.</p>
                 ) : (
                   <ul className="content-list">
-                    {questionSets.map((set) => (
+                    {questionSets.filter(qs =>
+                      qs.question_set_name.toLowerCase().includes(searchQuestionSet.toLowerCase())
+                    ).map((set) => (
                       <li
                         key={set.question_set_id}
                         className={`question-set-item ${
@@ -378,6 +444,7 @@ export default function Dashboard() {
                         </div>
                       </li>
                     ))}
+
                   </ul>
                 )}
               </div>
@@ -386,16 +453,18 @@ export default function Dashboard() {
 
           {/* Data Sets */}
           <div className="card dataset">
-            <div className="card-header">
-              <h2>Data Sets</h2>
-              <button
-                className="btn btn-primary"
-                onClick={() => setShowImportModal(true)}
-              >
-                Import Data
-              </button>
-
-              
+            <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h2>Question Sets</h2>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <input
+                  type="text"
+                  placeholder="Search datasets..."
+                  value={searchQuestionSet}
+                  onChange={(e) => setSearchDataset(e.target.value)}
+                  style={{ padding: "0.4rem 0.8rem", borderRadius: "6px", border: "1px solid #ccc", width: "180px" }}
+                />
+                <button className="btn btn-primary" onClick={() => setShowModal(true)}>Add Dataset</button>
+              </div>
             </div>
             <div className="card-body">
               <div className="item-container">
@@ -404,32 +473,35 @@ export default function Dashboard() {
                     <p>No data sets for this question set.</p>
                   ) : (
                     <ul className="content-list">
-                      {filteredDatasets.map((dataset) => (
-                        <li
-                          key={dataset.data_set_id}
-                          className={`dataset-item ${
-                            selectedDataset?.data_set_id === dataset.data_set_id ? "Active" : ""
-                          }`}
-                          onClick={() => setSelectedDataset(dataset)}
-                        >
-                          <span>
-                            {dataset.data_set_name} {dataset.active ? "(Active)" : ""}
-                          </span>
-                          <div className="item-actions">
-                            <button
-                              className="btn btn-actions"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedItem(dataset);
-                                setEditType("dataset");
-                                setIsActionModalOpen(true);
-                              }}
-                            >
-                              <Edit size={25} />
-                            </button>
-                          </div>
-                        </li>
-                      ))}
+                      {filteredDatasets
+                        .filter(ds => ds.data_set_name.toLowerCase().includes(searchDataset.toLowerCase()))
+                        .map((dataset) => (
+                          <li
+                            key={dataset.data_set_id}
+                            className={`dataset-item ${
+                              selectedDataset?.data_set_id === dataset.data_set_id ? "Active" : ""
+                            }`}
+                            onClick={() => setSelectedDataset(dataset)}
+                          >
+                            <span>
+                              {dataset.data_set_name} {dataset.active ? "(Active)" : ""}
+                            </span>
+                            <div className="item-actions">
+                              <button
+                                className="btn btn-actions"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedItem(dataset);
+                                  setEditType("dataset");
+                                  setIsActionModalOpen(true);
+                                }}
+                              >
+                                <Edit size={25} />
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+
                     </ul>
 
                   )
@@ -644,12 +716,14 @@ export default function Dashboard() {
       <AddQuestionSetModal
         show={showModal}
         onClose={() => setShowModal(false)}
-        onSuccess={async (newSet) => {
-          setAddingSet(true); // show loading
-          await new Promise(resolve => setTimeout(resolve, 50)); // let DOM update
+        onSuccess={async () => {
+          setAddingSet(true);
+          await new Promise(resolve => setTimeout(resolve, 100));
 
           try {
-            setQuestionSets(prev => [...prev, newSet]);
+            await fetchQuestionSets(); 
+            setSuccessMessage("Questions imported successfully!");
+            setShowSuccessModal(true); 
           } finally {
             setAddingSet(false);
             setShowModal(false);
@@ -660,12 +734,14 @@ export default function Dashboard() {
         show={showImportModal}
         onClose={() => setShowImportModal(false)}
         questionSets={questionSets}
-        onSuccess={async (newDataset) => {
+        onSuccess={async () => {
           setImporting(true);
-          await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise(resolve => setTimeout(resolve, 100));
 
           try {
-            setDatasets(prev => [...prev, newDataset]);
+            await fetchDatasets(); 
+            setSuccessMessage("Dataset imported successfully!");
+            setShowSuccessModal(true); 
           } finally {
             setImporting(false);
             setShowImportModal(false);
@@ -740,6 +816,14 @@ export default function Dashboard() {
         onConfirm={confirmModal.action}
         onClose={() => setConfirmModal({ ...confirmModal, show: false })}
       />
+      {deleteLoadig && (
+        <div className="loading-overlay">
+          <div className="loading-container">
+            <div className="spinner"></div>
+            <p>Deleting {deletingItemType}, please wait...</p>
+          </div>
+        </div>
+      )}
     {isActivateModalOpen && (
       <div className="modal-overlay">
         <div className="modal large">
@@ -749,22 +833,30 @@ export default function Dashboard() {
           <table className="question-table">
             <thead>
               <tr>
-                <th>Dataset Name</th>
-                <th>Connected Question Set</th>
-                <th>Date Created</th>
-                <th>Status</th>
+                <th onClick={() => handleSort("data_set_name")}>
+                  Dataset Name {getSortArrow("data_set_name")}
+                </th>
+                <th onClick={() => handleSort("question_set_id")}>
+                  Connected Question Set {getSortArrow("question_set_id")}
+                </th>
+                <th onClick={() => handleSort("created_at")}>
+                  Date Created {getSortArrow("created_at")}
+                </th>
+                <th onClick={() => handleSort("status")}>
+                  Status {getSortArrow("status")}
+                </th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              {sortData(
-                datasets.filter(ds => ds.data_set_name.toLowerCase().includes(searchQuery.toLowerCase())),
-                sortConfig.key
-              )
+              {getSortedDatasetsForModal()
+                .filter(ds =>
+                  ds.data_set_name.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .slice((currentPage - 1) * 5, currentPage * 5)
                 .map(ds => {
                   const setName =
-                    questionSets.find(s => s.question_set_id === ds.question_set_id)?.question_set_name ||
-                    "-";
+                    questionSets.find(s => s.question_set_id === ds.question_set_id)?.question_set_name || "-";
                   return (
                     <tr key={ds.data_set_id}>
                       <td>{ds.data_set_name}</td>
@@ -778,15 +870,13 @@ export default function Dashboard() {
                         )}
                       </td>
                       <td>
-                        {!ds.active && (
+                        {ds.status !== "Active" && (
                           <button
                             className="btn-primary"
-                            onClick={() => {
-                              handleActivateDataset(ds);
-                              setIsActivateModalOpen(false);
-                            }}
+                            onClick={() => handleActivateDataset(ds)}
+                            disabled={activatingDatasetId === ds.data_set_id}
                           >
-                            Activate
+                            {activatingDatasetId === ds.data_set_id ? "Activating..." : "Activate"}
                           </button>
                         )}
                       </td>
@@ -796,6 +886,29 @@ export default function Dashboard() {
             </tbody>
           </table>
 
+          {/* Pagination */}
+          <div className="pagination" style={{ paddingTop: "25px" }}>
+            <button
+              className="btn-cancel"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+            <span>
+              Page {currentPage} of {Math.ceil(datasets.length / 5)}
+            </span>
+            <button
+              className="btn-cancel"
+              onClick={() =>
+                setCurrentPage(prev => Math.min(prev + 1, Math.ceil(datasets.length / 5)))
+              }
+              disabled={currentPage === Math.ceil(datasets.length / 5)}
+            >
+              Next
+            </button>
+          </div>
+
           <div style={{ marginTop: "1rem", textAlign: "right" }}>
             <button className="btn-cancel" onClick={() => setIsActivateModalOpen(false)}>
               Close
@@ -804,6 +917,16 @@ export default function Dashboard() {
         </div>
       </div>
     )}
+    {showSuccessModal && (
+    <div className="success-modal">
+      <div className="success-modal-backdrop" onClick={() => setShowSuccessModal(false)}></div>
+      <div className="success-modal-container">
+        <h2>✅ Success</h2>
+        <p>{successMessage}</p>
+        <button className="btn-ok" onClick={() => setShowSuccessModal(false)}>OK</button>
+      </div>
+    </div>
+  )}
     </div>
     
   );
