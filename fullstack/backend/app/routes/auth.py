@@ -23,7 +23,6 @@ def login():
     data = request.get_json()
     email = data.get("email")
     password = data.get("password")
-    remember = data.get("remember", False)
 
     if not email or not password:
         return jsonify({"success": False, "message": "Email and password are required"}), 400

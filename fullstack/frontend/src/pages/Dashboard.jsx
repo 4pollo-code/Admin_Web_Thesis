@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
-import { Edit } from "lucide-react"
+import { Edit, RefreshCw  } from "lucide-react"
 import "./css/dashboard.css";
 import Header from "../components/Header";
 import axios from "axios";
@@ -83,7 +83,7 @@ export default function Dashboard() {
   const openConfirm = (title, message, action) => {
     setConfirmModal({ show: true, title, message, action });
   }
-// Compute distribution for datasets (records)
+
   useEffect(() => {
     if (selectedDataset && records.length > 0) {
       let stem = 0, abm = 0, humss = 0;
@@ -95,11 +95,26 @@ export default function Dashboard() {
           humss += rec.humss_score || 0;
         });
       } else {
-        // count by strand
+        // Count by strand (normalize variations)
         records.forEach((rec) => {
-          if (rec.strand === "STEM") stem++;
-          if (rec.strand === "ABM") abm++;
-          if (rec.strand === "HUMSS") humss++;
+          const strand = (rec.strand || "").toUpperCase().trim();
+
+          if (
+            strand.includes("STEM") ||
+            strand.includes("SCIENCE, TECHNOLOGY, ENGINEERING AND MATHEMATICS")
+          ) {
+            stem++;
+          } else if (
+            strand.includes("ABM") ||
+            strand.includes("ACCOUNTANCY AND BUSINESS MANAGEMENT")
+          ) {
+            abm++;
+          } else if (
+            strand.includes("HUMSS") ||
+            strand.includes("HUMANITIES AND SOCIAL SCIENCES")
+          ) {
+            humss++;
+          }
         });
       }
 
@@ -214,33 +229,57 @@ export default function Dashboard() {
   }, [selectedSet]);
 
   // 🔑 Save edits
-  const handleSaveEdit = async (newDesc) => {
-  try {
-    if (editType === "dataset" && selectedDataset) {
-      await axios.put(
-        `${API_BASE_URL}/datasets/${selectedDataset.data_set_id}`, {headers: { Authorization: `Bearer ${token}` }},
-        {
-          data_set_name: selectedDataset.data_set_name,
-          data_set_description: newDesc,
-        }
-      );
-      fetchDatasets(); // refresh list
-    } else if (editType === "set" && selectedSet) {
-      await axios.put(
-        `${API_BASE_URL}/question-sets/${selectedSet.question_set_id}`, {headers: { Authorization: `Bearer ${token}` }},
-        {
-          question_set_name: selectedSet.question_set_name,
-          description: newDesc,
-        }
-      );
-      fetchQuestionSets(); // refresh list
-    }
-    setShowEditModal(false);
-  } catch (err) {
-    console.error("Error saving edit:", err);
-  }
-};
+  const handleSaveEdit = async (newData) => {
+    try {
+      if (editType === "dataset" && selectedItem) {
+        await axios.put(
+          `${API_BASE_URL}/datasets/${selectedItem.data_set_id}`,
+          {
+            data_set_name: selectedItem.data_set_name,
+            data_set_description: newData,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        await fetchDatasets();
 
+      } else if (editType === "set" && selectedItem) {
+        await axios.put(
+          `${API_BASE_URL}/questions/${selectedItem.question_set_id}`,
+          {
+            question_set_name: selectedItem.question_set_name,
+            description: newData,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        await fetchQuestionSets();
+
+      } else if (editType === "question" && selectedItem) {
+        await axios.put(
+          `${API_BASE_URL}/questions/${selectedItem.question_id}`,
+          {
+            question_text: newData.question_text,
+            strand: newData.strand,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        await fetchQuestionSets(); // refresh questions
+      }
+
+      // ✅ Close modal after successful edit
+      setShowEditModal(false);
+      setSelectedItem(null);
+      setEditType(null);
+
+    } catch (err) {
+      console.error("❌ Error saving edit:", err);
+    }
+  };
+  
+  const handleEditRow = (item, type) => {
+  setSelectedItem(item);     // store which record/question is being edited
+  setEditType(type);         // type can be "record" or "question"
+  setShowEditModal(true);    // open the edit modal
+};
   // 🔑 Load records for selected dataset
   useEffect(() => {
     if (selectedDataset) {
@@ -392,7 +431,15 @@ export default function Dashboard() {
             Activate Dataset
           </button>
         </div>
-
+        <button
+          className="refresh-btn"
+          onClick={() => {
+            fetchQuestionSets();
+            fetchDatasets();
+          }}
+        >
+          <RefreshCw />
+        </button>
         <div className="top-section">
           {/* Question Sets */}
           <div className="card question-set">
@@ -454,16 +501,16 @@ export default function Dashboard() {
           {/* Data Sets */}
           <div className="card dataset">
             <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h2>Question Sets</h2>
+              <h2>Data Sets</h2>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <input
                   type="text"
                   placeholder="Search datasets..."
-                  value={searchQuestionSet}
+                  value={searchDataset}
                   onChange={(e) => setSearchDataset(e.target.value)}
                   style={{ padding: "0.4rem 0.8rem", borderRadius: "6px", border: "1px solid #ccc", width: "180px" }}
                 />
-                <button className="btn btn-primary" onClick={() => setShowModal(true)}>Add Dataset</button>
+                <button className="btn btn-primary" onClick={() => setShowImportModal(true)}>Add Dataset</button>
               </div>
             </div>
             <div className="card-body">
@@ -661,15 +708,10 @@ export default function Dashboard() {
                   <table className="question-table">
                     <thead>
                       <tr>
-                        <th onClick={() => handleSort("index")}>
-                          # {getSortArrow("index")}
-                        </th>
-                        <th onClick={() => handleSort("question_text")}>
-                          Question {getSortArrow("question_text")}
-                        </th>
-                        <th onClick={() => handleSort("strand")}>
-                          Strand {getSortArrow("strand")}
-                        </th>
+                        <th onClick={() => handleSort("index")}># {getSortArrow("index")}</th>
+                        <th onClick={() => handleSort("question_text")}>Question {getSortArrow("question_text")}</th>
+                        <th onClick={() => handleSort("strand")}>Strand {getSortArrow("strand")}</th>
+                        <th></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -678,9 +720,18 @@ export default function Dashboard() {
                           <td>{index + 1}</td>
                           <td>{q.question_text}</td>
                           <td>{q.strand}</td>
+                          <td>
+                            <button
+                              className="btn btn-edit"
+                              onClick={() => handleEditRow(q, "question")}
+                            >
+                              <Edit size={20} />
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
+
                   </table>
                 )
               ) : (
@@ -710,9 +761,10 @@ export default function Dashboard() {
             setConfirmModal({ show: false });
           })
         }
-        item={editType === "dataset" ? selectedDataset : selectedSet}
+        item={selectedItem}
         type={editType}
       />
+
       <AddQuestionSetModal
         show={showModal}
         onClose={() => setShowModal(false)}

@@ -13,6 +13,8 @@ export default function CourseDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'course_name', direction: 'asc' });
   const [currentPage, setCurrentPage] = useState(1);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const rowsPerPage = 5;
 
   const token = sessionStorage.getItem('token');
@@ -41,7 +43,10 @@ export default function CourseDashboard() {
   const loadCourses = async () => {
     try {
       const res = await axios.get(`${API_URL}/courses/`, { headers: { Authorization: `Bearer ${token}` } });
-      setCourses(res.data);
+      const sorted = res.data.sort((a, b) =>
+        a.course_name.toLowerCase() < b.course_name.toLowerCase() ? -1 : 1
+      );
+      setCourses(sorted);
     } catch (err) {
       console.error(err);
     }
@@ -61,6 +66,24 @@ export default function CourseDashboard() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    try {
+      if (selectedCourse) {
+        await axios.put(`${API_URL}/courses/${selectedCourse.course_id}`, formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        await axios.post(`${API_URL}/courses/`, formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+      loadCourses();
+      closeModal();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save course.');
+    }
+  };
+  const handleSaveConfirm = async () => {
     try {
       if (selectedCourse) {
         await axios.put(`${API_URL}/courses/${selectedCourse.course_id}`, formData, {
@@ -157,8 +180,14 @@ export default function CourseDashboard() {
                         <Edit size={18} />
                         Edit
                     </button>
-                    <button className="delete-btn" onClick={() => handleDelete(course)}>
-                        Delete
+                    <button
+                      className="delete-btn"
+                      onClick={() => {
+                        setSelectedCourse(course);
+                        setShowDeleteConfirm(true);
+                      }}
+                    >
+                      Delete
                     </button>
                 </div>
               </div>
@@ -196,7 +225,13 @@ export default function CourseDashboard() {
         <div className="modal-overlay">
           <div className="modal">
             <h2>{selectedCourse ? 'Edit Course' : 'Add Course'}</h2>
-            <form onSubmit={handleSubmit} className="modal-form">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();      // stop default submit
+                setShowSaveConfirm(true); // show save confirmation modal
+              }}
+              className="modal-form"
+            >
               <label htmlFor="course_name">Course Name</label>
               <input
                 id="course_name"
@@ -218,6 +253,68 @@ export default function CourseDashboard() {
           </div>
         </div>
       )}
+      {showSaveConfirm && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>Confirm {selectedCourse ? "Update" : "Add"} Course</h3>
+            <p>
+              Are you sure you want to {selectedCourse ? "update" : "add"} this course?
+            </p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={() => setShowSaveConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-save"
+                onClick={async () => {
+                  await handleSaveConfirm();
+                  setShowSaveConfirm(false);
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showDeleteConfirm && (
+      <div className="modal-overlay">
+        <div className="modal">
+          <h3>Confirm Delete</h3>
+          <p>Are you sure you want to delete "{selectedCourse?.course_name}"?</p>
+          <div className="modal-actions">
+            <button
+              type="button"
+              className="btn-cancel"
+              onClick={() => setShowDeleteConfirm(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn-delete"
+              onClick={async () => {
+                await axios.delete(`${API_URL}/courses/${selectedCourse.course_id}`, {
+                  headers: { Authorization: `Bearer ${token}` },
+                });
+                loadCourses();
+                setShowDeleteConfirm(false);
+                closeModal();
+              }}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+
     </div>
   );
 }

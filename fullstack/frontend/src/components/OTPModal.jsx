@@ -86,7 +86,7 @@ const OTPModal = ({
         if (res.data.success) {
           alert("Email verified successfully!");
           if (onSuccess) onSuccess();
-          navigate("/userLogin");
+          navigate("/");
         }
       } else if (mode === "forgot") {
 
@@ -109,7 +109,7 @@ const OTPModal = ({
         if (res.data.success) {
           if (onSuccess) onSuccess();
           alert("Password reset successfully!");
-          navigate("/userLogin");
+          navigate("/");
         }
     }
     } catch (err) {

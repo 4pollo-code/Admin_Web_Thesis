@@ -73,6 +73,7 @@
 .card-body {
   padding: 1rem 1.2rem;
   flex: 1;
+  height: 320px;
   max-height: 320px;
   overflow-y: auto;
   display: flex;
@@ -231,7 +232,7 @@ p {
 .question-table tr:hover td { background: #f3f4f6; }
 
 /* ================== Modal Overlay ================== */
-.modal-overlay {
+.confirm-modal .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -242,7 +243,7 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 20000;
+  z-index: 30000;
   animation: fadeIn 0.25s ease forwards;
   padding: 1rem;
 }
@@ -282,7 +283,6 @@ p {
 /* ================== Modal Header ================== */
 .modal-header {
   padding: 1.5rem 1.75rem;
-  background: linear-gradient(135deg, #2563eb, #1e40af);
   color: white;
   display: flex;
   align-items: center;

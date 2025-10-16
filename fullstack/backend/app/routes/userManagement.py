@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from ..models import User
 from app import db
 from ..services.hashing import hash_password
+from sqlalchemy.exc import IntegrityError
 
 userManagement_bp = Blueprint("user-management", __name__)
 
@@ -18,15 +19,19 @@ def create():
             last_name=data["last_name"],  
             affix=data.get("affix"),
             password= hash_password(data["password"]),
+            birthday=data.get("birthday"),
             role=data.get("role")
         )
         db.session.add(new_user)
         db.session.commit()
         return jsonify({"message": "User created successfully"}), 201
     except Exception as e:
+        print(e)
         db.session.rollback()
-        return jsonify({"error": f"Failed to Create User: {str(e)}"}), 500
+        if "user_data_email_key" in str(e):
+            return jsonify({"error": "Email already exists in the system"}), 400
 
+        return jsonify({"error": f"Failed to Create User: {str(e)}"}), 500
 
 # DELETE
 @userManagement_bp.route("/user-management/<int:chosen_id>", methods=["DELETE"])
@@ -38,6 +43,7 @@ def delete(chosen_id):
         return jsonify({"message": "User deleted successfully"}), 200
     except Exception as e:
         db.session.rollback()
+        print(e)
         return jsonify({"error": f"Failed to Delete User: {str(e)}"}), 500
 
 
@@ -74,6 +80,7 @@ def display_users():
         users_list = [user.user_info() for user in users]
         return jsonify(users_list), 200
     except Exception as e:
+        print(e)
         return jsonify({"error": f"Failed to Retrieve Users: {str(e)}"}), 500
     
 

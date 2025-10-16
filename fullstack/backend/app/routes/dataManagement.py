@@ -109,15 +109,36 @@ def import_dataset():
         db.session.flush()
 
         strand_entries = []
+
         for row in rows:
-            strand_label = row.get("Strand", "").strip()
+            raw_strand = (
+                row.get("Strand")
+                or row.get("strand")
+                or row.get("Is your Senior High School strand aligned with your current course/program?")
+                or ""
+            ).strip()
+
+            # Map long-form strand names to short forms
+            strand_map = {
+                "science, technology, engineering and mathematics": "STEM",
+                "humanities and social sciences": "HUMSS",
+                "accountancy and business management": "ABM"
+            }
+
+            norm_strand = normalize(raw_strand)
+            for key, val in strand_map.items():
+                if key in norm_strand:
+                    strand_label = val
+                    break
+            else:
+                strand_label = raw_strand
+
             totals = {"STEM": 0, "ABM": 0, "HUMSS": 0}
 
             for question, value in row.items():
                 norm_q = normalize(question)
                 if norm_q == "strand" or norm_q not in db_questions:
                     continue
-
                 strand = db_questions.get(norm_q)
                 if strand in totals:
                     try:
@@ -223,6 +244,7 @@ def update_dataset_info(data_set_id):
     try:
         dataset = DataSet.query.get_or_404(data_set_id)
         data = request.get_json()
+        print(data)
         dataset.data_set_name = data.get("data_set_name", dataset.data_set_name)
         dataset.data_set_description = data.get("data_set_description", dataset.data_set_description)
         db.session.commit()
@@ -231,6 +253,3 @@ def update_dataset_info(data_set_id):
     except SQLAlchemyError as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
-    
-
-

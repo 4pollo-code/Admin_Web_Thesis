@@ -89,7 +89,7 @@ body {
   z-index: 2;
 }
 
-.modal-header {
+.login-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;

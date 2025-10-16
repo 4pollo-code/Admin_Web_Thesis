@@ -14,6 +14,8 @@ export default function UserManagementSystem() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: "first_name", direction: "asc" });
   const [currentPage, setCurrentPage] = useState(1);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const rowsPerPage = 10;
   const navigate = useNavigate();
   const token = sessionStorage.getItem('token');
@@ -64,6 +66,7 @@ export default function UserManagementSystem() {
         last_name: user.last_name,
         affix: user.affix,
         email: user.email,
+        birthday: user.birthday,
         role: user.role
       });
     } else {
@@ -100,6 +103,7 @@ export default function UserManagementSystem() {
         first_name: formatName(formData.first_name),
         last_name: formatName(formData.last_name),
         affix: formData.affix ? formatName(formData.affix) : "",
+        birthday: formData.birthday
       };
 
       console.log("📤 Sending data:", formattedData); // <-- Verify in console
@@ -114,9 +118,36 @@ export default function UserManagementSystem() {
       closeModal();
     } catch (err) {
       console.error("Error saving user:", err);
-      alert("An error occurred while saving user data.");
+      const msg = err.response?.data?.error || "An error occurred while saving user data.";
+      alert(msg);
     }
   };
+  const handleSubmitConfirm = async () => {
+    try {
+      const formattedData = {
+        ...formData,
+        email: formData.email.toLowerCase(),
+        first_name: formatName(formData.first_name),
+        last_name: formatName(formData.last_name),
+        affix: formData.affix ? formatName(formData.affix) : "",
+        birthday: formData.birthday
+      };
+
+      if (selectedUser) {
+        await handleUpdate(formattedData);
+      } else {
+        await handleCreate(formattedData);
+      }
+
+      fetchUsers(); // Refetch users automatically
+      closeModal();
+    } catch (err) {
+      console.error("Error saving user:", err);
+      const msg = err.response?.data?.error || "An error occurred while saving user data.";
+      alert(msg);
+    }
+  };
+
 
   const handleDelete = async () => {
     if (selectedUser) {
@@ -245,7 +276,13 @@ export default function UserManagementSystem() {
         <div className="modal-overlay">
           <div className="modal">
             <h2>{selectedUser ? "Edit User" : "Create User"}</h2>
-            <form onSubmit={handleSubmit} className="modal-form">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();       // stop default submission
+                setShowSaveConfirm(true); // show confirmation modal
+              }}
+              className="modal-form"
+            >
               <label htmlFor="first_name">First Name</label>
               <input
                 id="first_name"
@@ -281,6 +318,14 @@ export default function UserManagementSystem() {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
               />
+              <label htmlFor="birthday">Birthday</label>
+              <input
+                id="birthday"
+                type="date"
+                value={formData.birthday || ""}
+                onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
+                required
+              />
               {!selectedUser && (
                 <>
                   <label htmlFor="password">Password</label>
@@ -290,6 +335,7 @@ export default function UserManagementSystem() {
                     placeholder="Password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    minLength={8}
                     required
                   />
                 </>
@@ -308,7 +354,13 @@ export default function UserManagementSystem() {
               <div className="modal-actions">
                 <button type="submit" className="btn-save">Save</button>
                 {selectedUser && currentUser && selectedUser.user_id !== currentUser.user_id && (
-                  <button type="button" onClick={handleDelete} className="btn-delete">Delete</button>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="btn-delete"
+                  >
+                    Delete
+                  </button>
                 )}
                 <button type="button" onClick={closeModal} className="btn-cancel">Cancel</button>
               </div>
@@ -316,6 +368,63 @@ export default function UserManagementSystem() {
           </div>
         </div>
       )}
+      {showDeleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>Confirm Delete</h3>
+            <p>Are you sure you want to delete {selectedUser.first_name} {selectedUser.last_name}?</p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="btn-cancel"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleDelete();
+                  setShowDeleteConfirm(false);
+                }}
+                className="btn-delete"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showSaveConfirm && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>Confirm {selectedUser ? "Update" : "Add"} User</h3>
+            <p>
+              Are you sure you want to {selectedUser ? "update" : "add"} this user?
+            </p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={() => setShowSaveConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-save"
+                onClick={async () => {
+                  await handleSubmitConfirm();
+                  setShowSaveConfirm(false);
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

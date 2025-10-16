@@ -115,3 +115,27 @@ def delete_question_set(set_id):
         db.session.rollback()
         print(e)
         return jsonify({"error": str(e)}), 400
+    
+@question_sets_bp.route("/questions/<int:question_id>", methods=["PUT"])
+def update_question(question_id):
+    try:
+        question = Question.query.get_or_404(question_id)
+        data = request.get_json()
+
+        # Update allowed fields
+        question.question_text = data.get("question_text", question.question_text)
+        question.strand = data.get("strand", question.strand)
+
+        db.session.commit()
+        print(f"✅ Updated question ID {question_id}: {question.question_text}")
+
+        return jsonify({
+            "success": True,
+            "message": "Question updated successfully",
+            "question": question.questions_info()
+        }), 200
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        print("❌ Error updating question:", e)
+        return jsonify({"error": str(e)}), 500

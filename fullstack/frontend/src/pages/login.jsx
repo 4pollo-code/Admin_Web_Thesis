@@ -11,7 +11,6 @@ export default function Login() {
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const API_BASE_URL = process.env.REACT_APP_API_URL;
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -62,7 +61,7 @@ const handleSubmit = async (e) => {
 
       {/* Login Modal */}
       <div className="login-modal">
-        <div className="modal-header">
+        <div className="login-modal-header">
           <div className="user-icon-container">
             <User size={32} className="user-icon" />
             <Key size={16} className="key-icon" />

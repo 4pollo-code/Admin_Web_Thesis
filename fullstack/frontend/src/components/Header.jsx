@@ -75,20 +75,18 @@ const HeaderBar = () => {
 
   // logout
   const handleLogout = async () => {
+    console.log('Log out');
     try {
-      const res = await axios.post(
-        `${API_BASE_URL}/logout`,
-        {},
-        { withCredentials: true }
-      );
-      if (res.data.success) {
-        navigate(res.data.redirect || "/login");
-      }
+      localStorage.removeItem('token');
+      sessionStorage.removeItem('token');         
+      navigate("/");
+
     } catch (err) {
-      console.error("Logout failed:", err);
+      console.error("Logout failed", err);
       alert("Logout failed: " + (err.response?.data?.error || err.message));
     }
   };
+
 
   // change password
   const handleChangePassword = () => {
@@ -216,7 +214,6 @@ const HeaderBar = () => {
             setShowOTPModal(false);
             setNewPassword("");
             setConfirmPassword("");
-            alert("Password changed successfully!");
           }}
         />
       )}
