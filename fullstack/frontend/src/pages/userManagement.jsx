@@ -322,6 +322,7 @@ export default function UserManagementSystem() {
               <input
                 id="birthday"
                 type="date"
+                max={new Date().toISOString().split("T")[0]}
                 value={formData.birthday || ""}
                 onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
                 required
