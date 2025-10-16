@@ -681,7 +681,7 @@ export default function Dashboard() {
                   <table className="question-table">
                     <thead>
                       <tr>
-                        <th onClick={() => handleSort("index")}>#{getSortArrow("index")}</th>
+                        <th>#</th>
                         <th onClick={() => handleSort("strand")}>Strand{getSortArrow("strand")}</th>
                         <th onClick={() => handleSort("stem_score")}>STEM{getSortArrow("stem_score")}</th>
                         <th onClick={() => handleSort("abm_score")}>ABM{getSortArrow("abm_score")}</th>
@@ -708,7 +708,7 @@ export default function Dashboard() {
                   <table className="question-table">
                     <thead>
                       <tr>
-                        <th onClick={() => handleSort("index")}># {getSortArrow("index")}</th>
+                        <th>#</th>
                         <th onClick={() => handleSort("question_text")}>Question {getSortArrow("question_text")}</th>
                         <th onClick={() => handleSort("strand")}>Strand {getSortArrow("strand")}</th>
                         <th></th>
