@@ -16,6 +16,7 @@ export default function UserManagementSystem() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [errorModal, setErrorModal] = useState({ show: false, message: "" });
   const rowsPerPage = 10;
   const navigate = useNavigate();
   const token = sessionStorage.getItem('token');
@@ -106,8 +107,6 @@ export default function UserManagementSystem() {
         birthday: formData.birthday
       };
 
-      console.log("📤 Sending data:", formattedData); // <-- Verify in console
-
       if (selectedUser) {
         await handleUpdate(formattedData);
       } else {
@@ -119,9 +118,10 @@ export default function UserManagementSystem() {
     } catch (err) {
       console.error("Error saving user:", err);
       const msg = err.response?.data?.error || "An error occurred while saving user data.";
-      alert(msg);
+      setErrorModal({ show: true, message: msg });
     }
   };
+
   const handleSubmitConfirm = async () => {
     try {
       const formattedData = {
@@ -139,15 +139,14 @@ export default function UserManagementSystem() {
         await handleCreate(formattedData);
       }
 
-      fetchUsers(); // Refetch users automatically
+      fetchUsers();
       closeModal();
     } catch (err) {
       console.error("Error saving user:", err);
       const msg = err.response?.data?.error || "An error occurred while saving user data.";
-      alert(msg);
+      setErrorModal({ show: true, message: msg });
     }
   };
-
 
   const handleDelete = async () => {
     if (selectedUser) {
@@ -420,6 +419,23 @@ export default function UserManagementSystem() {
                 }}
               >
                 Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {errorModal.show && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3 style={{ color: "red" }}>Save Failed</h3>
+            <p>{errorModal.message}</p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={() => setErrorModal({ show: false, message: "" })}
+              >
+                Close
               </button>
             </div>
           </div>

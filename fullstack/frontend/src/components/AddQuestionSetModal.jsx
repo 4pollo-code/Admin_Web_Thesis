@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import * as XLSX from "xlsx";
 import axios from "axios";
-import "./css/AddQuestionSetModal.css"; // reuse same styles
+import "./css/AddQuestionSetModal.css"; 
 
 export default function AddQuestionSetModal({ show, onClose, onSuccess }) {
   const [fileName, setFileName] = useState("");
@@ -23,7 +23,7 @@ export default function AddQuestionSetModal({ show, onClose, onSuccess }) {
   };
 
   // ============================
-  // Handle File Upload
+  // Handle File Upload (with modal validation)
   // ============================
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -33,26 +33,79 @@ export default function AddQuestionSetModal({ show, onClose, onSuccess }) {
 
     const reader = new FileReader();
     reader.onload = (evt) => {
-      const workbook = XLSX.read(evt.target.result, { type: "binary" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+      try {
+        const workbook = XLSX.read(evt.target.result, { type: "binary" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
-      const formatted = rows.map((row, i) => ({
-        question_text: row["Questions"] || `Row ${i + 1} missing question`,
-        strand: row["Strand"] || "N/A",
-      }));
+        if (!rows.length) {
+          setErrorDetails({ message: "The uploaded file is empty." });
+          setQuestions([]);
+          return;
+        }
 
-      setQuestions(formatted);
+        // Validate that required columns exist
+        const headers = Object.keys(rows[0]);
+        const hasQuestions = headers.some(
+          (h) => h.trim().toLowerCase() === "questions"
+        );
+        const hasStrand = headers.some(
+          (h) => h.trim().toLowerCase() === "strand"
+        );
+
+        if (!hasQuestions || !hasStrand) {
+          setErrorDetails({
+            message:
+              "Invalid file format. Make sure the file has 'Questions' and 'Strand' columns.",
+          });
+          setQuestions([]);
+          setFileName("");
+          return;
+        }
+
+        // Map only valid rows
+        const formatted = rows
+          .filter((r) => r["Questions"]?.trim() && r["Strand"]?.trim())
+          .map((row) => ({
+            question_text: row["Questions"].trim(),
+            strand: row["Strand"].trim(),
+          }));
+
+        if (formatted.length === 0) {
+          setErrorDetails({ message: "No valid questions found in the file." });
+          setQuestions([]);
+          return;
+        }
+
+        setQuestions(formatted);
+      } catch (err) {
+        console.error("❌ Error parsing file:", err);
+        setErrorDetails({
+          message: "Failed to read file. Please upload a valid Excel/CSV file.",
+        });
+      }
     };
+
     reader.readAsBinaryString(file);
   };
 
   // ============================
-  // Save Question Set
+  // Save Question Set (with validation)
   // ============================
   const handleSave = async () => {
-    if (!questionSetName.trim() || !description.trim() || !fileName) {
-      alert("All fields are required!");
+    if (!questionSetName.trim()) {
+      setErrorDetails({ message: "Please enter a question set name." });
+      return;
+    }
+    if (!description.trim()) {
+      setErrorDetails({ message: "Please enter a description." });
+      return;
+    }
+    if (!fileName || questions.length === 0) {
+      setErrorDetails({
+        message:
+          "Please upload a valid file with 'Questions' and 'Strand' columns before saving.",
+      });
       return;
     }
 
@@ -71,9 +124,17 @@ export default function AddQuestionSetModal({ show, onClose, onSuccess }) {
       resetForm();
       onClose();
     } catch (err) {
-      console.error("Save failed:", err);
-      const data = err.response?.data;
-      setErrorDetails({ message: data?.error || err.message });
+      console.error("❌ Save failed:", err);
+
+      const status = err.response?.status;
+      const backendMsg = err.response?.data?.error;
+      const message =
+        backendMsg ||
+        (status === 409
+          ? "A question set with this name already exists. Please use a different name."
+          : "An error occurred while saving.");
+
+      setErrorDetails({ message });
     } finally {
       setIsUploading(false);
     }
@@ -175,17 +236,18 @@ export default function AddQuestionSetModal({ show, onClose, onSuccess }) {
         <div className="modal-overlay">
           <div className="modal-backdrop" onClick={() => setErrorDetails(null)}></div>
 
-          <div className="modal-container" style={{ maxWidth: "400px", textAlign: "center" }}>
-            <h2 style={{ color: "red", marginBottom: "10px" }}>Save Failed</h2>
-            <p>
-              Something went wrong while saving your question set. Please check your inputs and try again.
-            </p>
+          <div
+            className="modal-container"
+            style={{ maxWidth: "400px", textAlign: "center" }}
+          >
+            <h2 style={{ color: "red", marginBottom: "10px" }}>⚠️ Error</h2>
+            <p>{errorDetails.message}</p>
 
-            <div className="modal-actions" style={{ justifyContent: "center", marginTop: "15px" }}>
-              <button
-                className="btn-cancel"
-                onClick={() => setErrorDetails(null)}
-              >
+            <div
+              className="modal-actions"
+              style={{ justifyContent: "center", marginTop: "15px" }}
+            >
+              <button className="btn-cancel" onClick={() => setErrorDetails(null)}>
                 Close
               </button>
             </div>

@@ -44,6 +44,10 @@ def import_dataset():
     try:
         data = request.get_json()
         dataset_name = data.get("dataset_name")
+
+        if DataSet.query.filter_by(data_set_name=dataset_name).first():
+            return jsonify({"error": "A dataset with this name already exists."}), 409
+        
         description = data.get("description")
         question_set_id = data.get("question_set_id")
         rows = data.get("rows", [])
@@ -238,18 +242,33 @@ def update_dataset_status(data_set_id):
         return jsonify({"error": str(e)}), 500
 
 
-
 @dataset_bp.route("/datasets/<int:data_set_id>", methods=["PUT"])
 def update_dataset_info(data_set_id):
     try:
         dataset = DataSet.query.get_or_404(data_set_id)
         data = request.get_json()
-        print(data)
-        dataset.data_set_name = data.get("data_set_name", dataset.data_set_name)
+        new_name = data.get("data_set_name", dataset.data_set_name)
+
+        # ✅ Check for duplicate dataset name
+        existing = DataSet.query.filter(
+            DataSet.data_set_name == new_name,
+            DataSet.data_set_id != data_set_id
+        ).first()
+
+        if existing:
+            return jsonify({
+                "error": f"A dataset with the name '{new_name}' already exists."
+            }), 409  # Conflict
+
+        # ✅ Update fields
+        dataset.data_set_name = new_name
         dataset.data_set_description = data.get("data_set_description", dataset.data_set_description)
         db.session.commit()
-        print("Updated dataset:", dataset.data_set_info())
+
+        print("✅ Updated dataset:", dataset.data_set_info())
         return jsonify(dataset.data_set_info()), 200
+
     except SQLAlchemyError as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+

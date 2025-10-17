@@ -14,7 +14,7 @@ export default function EditModal({ show, onClose, onSave, item, type }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = () => {
@@ -24,24 +24,65 @@ export default function EditModal({ show, onClose, onSave, item, type }) {
   return (
     <div className="modal-overlay">
       <div className="modal medium">
-        <h2>Edit {type === "record" ? "Record" : "Question"}</h2>
+        <h2>
+          Edit{" "}
+          {type === "dataset"
+            ? "Dataset"
+            : type === "set"
+            ? "Question Set"
+            : "Question"}
+        </h2>
 
         <div className="modal-body">
-          {type === "record" ? (
+          {type === "dataset" && (
             <>
-              <label>Strand:</label>
-              <input name="strand" value={formData.strand || ""} onChange={handleChange} />
+              <label htmlFor="data_set_name">Dataset Name:</label>
+              <input
+                id="data_set_name"
+                name="data_set_name"
+                value={formData.data_set_name || ""}
+                onChange={handleChange}
+                className="edit-modal-input"
+                placeholder="Enter dataset name"
+              />
 
-              <label>STEM Score:</label>
-              <input name="stem_score" value={formData.stem_score || ""} onChange={handleChange} />
-
-              <label>ABM Score:</label>
-              <input name="abm_score" value={formData.abm_score || ""} onChange={handleChange} />
-
-              <label>HUMSS Score:</label>
-              <input name="humss_score" value={formData.humss_score || ""} onChange={handleChange} />
+              <label htmlFor="data_set_description">Description:</label>
+              <textarea
+                id="data_set_description"
+                name="data_set_description"
+                className="edit-modal-textarea"
+                value={formData.data_set_description || ""}
+                onChange={handleChange}
+                placeholder="Enter dataset description"
+              />
             </>
-          ) : (
+          )}
+
+          {type === "set" && (
+            <>
+              <label htmlFor="question_set_name">Question Set Name:</label>
+              <input
+                id="question_set_name"
+                name="question_set_name"
+                value={formData.question_set_name || ""}
+                onChange={handleChange}
+                className="edit-modal-input"
+                placeholder="Enter question set name"
+              />
+
+              <label htmlFor="description">Description:</label>
+              <textarea
+                id="description"
+                name="description"
+                className="edit-modal-textarea"
+                value={formData.description || ""}
+                onChange={handleChange}
+                placeholder="Enter description for the question set"
+              />
+            </>
+          )}
+
+          {type === "question" && (
             <>
               <label htmlFor="question_text">Question Text:</label>
               <textarea
@@ -50,7 +91,7 @@ export default function EditModal({ show, onClose, onSave, item, type }) {
                 className="edit-modal-textarea"
                 value={formData.question_text || ""}
                 onChange={handleChange}
-                placeholder="Enter the question text here..."
+                placeholder="Enter the question text"
               />
 
               <label htmlFor="strand">Strand:</label>

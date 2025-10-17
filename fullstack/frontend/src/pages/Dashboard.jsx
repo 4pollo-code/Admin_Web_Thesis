@@ -43,6 +43,27 @@ function ConfirmModal({ show, title, message, onConfirm, onClose }) {
     </div>
   );
 }
+function ErrorModal({ show, title = "Error", message, onClose }) {
+  if (!show) return null;
+  return (
+    <div className="modal-overlay">
+      <div className="modal small">
+        <div className="modal-header">
+          <h2 style={{ color: "red" }}>{title}</h2>
+        </div>
+        <div className="modal-body">
+          <p>{message || "An unexpected error occurred."}</p>
+        </div>
+        <div className="modal-footer">
+          <button className="btn-cancel" onClick={onClose}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [selectedSet, setSelectedSet] = useState(null);
   const [selectedDataset, setSelectedDataset] = useState(null);
@@ -52,7 +73,8 @@ export default function Dashboard() {
   const [questions, setQuestions] = useState([]);
   const [records, setRecords] = useState([]);
   const [isActivateModalOpen, setIsActivateModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(""); 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSaving, setIsSaving] = useState(false); 
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -78,7 +100,11 @@ export default function Dashboard() {
   const [distribution, setDistribution] = useState([]);
   const [distMode, setDistMode] = useState("count"); 
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
-
+  const [errorModal, setErrorModal] = useState({
+    show: false,
+    title: "",
+    message: "",
+  });
 
   const openConfirm = (title, message, action) => {
     setConfirmModal({ show: true, title, message, action });
@@ -170,6 +196,12 @@ export default function Dashboard() {
       });
     } catch (err) {
         console.error("Error fetching initial data:", err);
+        const msg = err.response?.data?.error || err.message || "An unknown error occurred.";
+        setErrorModal({
+          show: true,
+          title: "Loading Failed",
+          message: msg,
+        });
         navigate("/");
     }
     
@@ -231,12 +263,13 @@ export default function Dashboard() {
   // 🔑 Save edits
   const handleSaveEdit = async (newData) => {
     try {
+      setIsSaving(true);
       if (editType === "dataset" && selectedItem) {
         await axios.put(
           `${API_BASE_URL}/datasets/${selectedItem.data_set_id}`,
           {
-            data_set_name: selectedItem.data_set_name,
-            data_set_description: newData,
+            data_set_name: newData.data_set_name,
+            data_set_description: newData.data_set_description,
           },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -244,10 +277,10 @@ export default function Dashboard() {
 
       } else if (editType === "set" && selectedItem) {
         await axios.put(
-          `${API_BASE_URL}/questions/${selectedItem.question_set_id}`,
+          `${API_BASE_URL}/question-sets/${selectedItem.question_set_id}`,
           {
-            question_set_name: selectedItem.question_set_name,
-            description: newData,
+            question_set_name: newData.question_set_name,
+            description: newData.description,
           },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -272,6 +305,14 @@ export default function Dashboard() {
 
     } catch (err) {
       console.error("❌ Error saving edit:", err);
+      const msg = err.response?.data?.error || err.message || "An unknown error occurred.";
+      setErrorModal({
+        show: true,
+        title: "Saving Failed",
+        message: msg,
+      });
+    } finally {
+      setIsSaving(false); // hide spinner
     }
   };
   
@@ -287,7 +328,7 @@ export default function Dashboard() {
         .get(`${API_BASE_URL}/datasets/${selectedDataset.data_set_id}/records`, { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => {
           setRecords(res.data);
-          setOriginalRecords(res.data); // ✅ keep untouched copy
+          setOriginalRecords(res.data); 
         })
         .catch((err) => console.error("Error fetching records:", err));
     } else {
@@ -300,7 +341,7 @@ export default function Dashboard() {
   const handleDeleteDataset = async (id) => {
     try {
       setDeletingItemType("dataset");
-      setDeleteLoadig(true); // start loading
+      setDeleteLoadig(true); 
       // Delete dataset
       await axios.delete(`${API_BASE_URL}/datasets/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -312,7 +353,7 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Error deleting dataset:", err);
     } finally {
-      setDeleteLoadig(false); // stop loading regardless of success/error
+      setDeleteLoadig(false); 
       setDeletingItemType("");
     }
   };
@@ -418,6 +459,7 @@ export default function Dashboard() {
   
   return (
     <div className="dashboard-container">
+      <LoadingOverlay show={isSaving} text="Saving changes, please wait..." />
       <LoadingOverlay show={addingSet} text="Adding Question Set..." />
       <LoadingOverlay show={importing} text="Importing Dataset..." />
       <Header />
@@ -799,6 +841,12 @@ export default function Dashboard() {
             setShowImportModal(false);
           }
         }}
+      />
+      <ErrorModal
+        show={errorModal.show}
+        title={errorModal.title}
+        message={errorModal.message}
+        onClose={() => setErrorModal({ ...errorModal, show: false })}
       />
       {/* Action Modal */}
       {isActionModalOpen && selectedItem && (

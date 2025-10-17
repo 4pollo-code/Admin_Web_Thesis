@@ -12,7 +12,9 @@ userManagement_bp = Blueprint("user-management", __name__)
 def create(): 
     try:
         data = request.get_json()
-
+        existing_user = User.query.filter_by(email=data["email"].lower()).first()
+        if existing_user:
+            return jsonify({"error": "Email already exists in the system"}), 400
         new_user = User(
             email=data["email"],
             first_name=data["first_name"],
@@ -56,14 +58,19 @@ def update(chosen_id):
         user = User.query.get(chosen_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
-
+        if "email" in data:
+            email = data["email"].lower()
+            existing_user = User.query.filter(User.email == email, User.user_id != chosen_id).first()
+            if existing_user:
+                return jsonify({"error": "Email already exists in the system"}), 400
+            user.email = email
         user.email = data.get("email", user.email)
         user.first_name = data.get("first_name", user.first_name)
         user.last_name = data.get("last_name", user.last_name)
         user.affix = data.get("affix", user.affix)
         user.password = data.get("password", user.password)
         user.role = data.get("role", user.role)
-
+        
         db.session.commit()
         return jsonify({"message": "User updated successfully"}), 200
     except Exception as e:

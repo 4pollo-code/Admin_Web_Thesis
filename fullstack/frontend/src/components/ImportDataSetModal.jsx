@@ -23,6 +23,7 @@ export default function ImportDataSetModal({ show, onClose, onSuccess, questionS
     setRows([]);
     setErrorDetails(null);
   };
+
   // ============================
   // 📁 Handle File Upload
   // ============================
@@ -36,10 +37,7 @@ export default function ImportDataSetModal({ show, onClose, onSuccess, questionS
     reader.onload = (evt) => {
       const workbook = XLSX.read(evt.target.result, { type: "binary" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(sheet, {
-        defval: "",
-        raw: true,
-      });
+      const data = XLSX.utils.sheet_to_json(sheet, { defval: "", raw: true });
       setRows(data);
     };
     reader.readAsBinaryString(file);
@@ -71,9 +69,16 @@ export default function ImportDataSetModal({ show, onClose, onSuccess, questionS
       onClose();
     } catch (err) {
       console.error("❌ Import failed:", err);
-
       const data = err.response?.data;
-      if (data?.missing_questions || data?.extra_questions || data?.missing_strand_rows) {
+
+      // === Handle different error scenarios ===
+      if (data?.error?.includes("already exists")) {
+        // Duplicate dataset name error
+        setErrorDetails({
+          message: "A dataset with this name already exists. Please use a different name.",
+        });
+      } else if (data?.missing_questions || data?.extra_questions || data?.missing_strand_rows) {
+        // Validation-related errors
         setErrorDetails({
           missingQuestions: data.missing_questions || [],
           extraQuestions: data.extra_questions || [],
@@ -81,7 +86,10 @@ export default function ImportDataSetModal({ show, onClose, onSuccess, questionS
           message: data.error || "Import failed due to missing or invalid data.",
         });
       } else {
-        alert("Import failed: " + (data?.error || err.message));
+        // Unknown/general error
+        setErrorDetails({
+          message: data?.error || err.message || "An unknown error occurred.",
+        });
       }
     } finally {
       setIsUploading(false);
@@ -90,7 +98,6 @@ export default function ImportDataSetModal({ show, onClose, onSuccess, questionS
 
   return (
     <div className="modal-overlay">
-      {/* === BACKDROP === */}
       <div className="modal-backdrop" onClick={onClose}></div>
 
       {/* === MAIN MODAL === */}
@@ -104,7 +111,6 @@ export default function ImportDataSetModal({ show, onClose, onSuccess, questionS
             value={datasetName}
             onChange={(e) => setDatasetName(e.target.value)}
             className="modal-input"
-            required
           />
 
           <textarea
@@ -112,14 +118,12 @@ export default function ImportDataSetModal({ show, onClose, onSuccess, questionS
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="modal-textarea"
-            required
           />
 
           <select
             className="modal-input"
             value={selectedSetId}
             onChange={(e) => setSelectedSetId(e.target.value)}
-            required
           >
             <option value="">Select Question Set</option>
             {questionSets.map((set) => (
@@ -128,7 +132,6 @@ export default function ImportDataSetModal({ show, onClose, onSuccess, questionS
               </option>
             ))}
           </select>
-
 
           <div className="file-upload-wrapper">
             <label htmlFor="dataset-file" className="btn-upload">
@@ -145,56 +148,42 @@ export default function ImportDataSetModal({ show, onClose, onSuccess, questionS
 
           {fileName && <p className="file-name">Selected: {fileName}</p>}
 
-          {/* Filtered Preview */}
           {rows.length > 0 && (
-  <div className="preview">
-    <h3 className="preview-title">Preview (Recognized Columns)</h3>
-
-    {(() => {
-      // If we have question lists, use them
-      const selectedSet = questionSets.find(
-        (set) => set.question_set_id == selectedSetId
-      );
-      let displayedCols = Object.keys(rows[0] || []);
-
-      return (
-        <>
-          <table className="preview-table">
-            <thead>
-              <tr>
-                {displayedCols.map((col, i) => (
-                  <th key={i}>{col}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.slice(0, 5).map((row, i) => (
-                <tr key={i}>
-                  {displayedCols.map((col, j) => (
-                    <td key={j}>{row[col]}</td>
+            <div className="preview">
+              <h3 className="preview-title">Preview</h3>
+              <table className="preview-table">
+                <thead>
+                  <tr>
+                    {Object.keys(rows[0] || {}).map((col, i) => (
+                      <th key={i}>{col}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.slice(0, 5).map((row, i) => (
+                    <tr key={i}>
+                      {Object.keys(rows[0]).map((col, j) => (
+                        <td key={j}>{row[col]}</td>
+                      ))}
+                    </tr>
                   ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="preview-note">
-            Showing first 5 rows {selectedSet?.questions ? "(filtered)" : "(all columns)"}
-          </p>
-        </>
-      );
-    })()}
-  </div>
-)}
-
+                </tbody>
+              </table>
+              {rows.length > 5 && <p>Showing first 5 rows...</p>}
+            </div>
+          )}
 
           <div className="modal-actions">
-            <button  onClick={() => {
-              resetForm();
-              onClose();
-            }} className="btn-cancel">
+            <button
+              className="btn-cancel"
+              onClick={() => {
+                resetForm();
+                onClose();
+              }}
+            >
               Cancel
             </button>
-            <button onClick={handleSave} className="btn-save">
+            <button className="btn-save" onClick={handleSave}>
               Import
             </button>
           </div>
@@ -211,18 +200,16 @@ export default function ImportDataSetModal({ show, onClose, onSuccess, questionS
         </div>
       )}
 
-
-      {/* === ERROR DETAILS MODAL === */}
+      {/* === ERROR MODAL === */}
       {errorDetails && (
         <div className="modal-overlay">
           <div className="modal-backdrop" onClick={() => setErrorDetails(null)}></div>
 
-          <div className="modal-container" style={{ maxWidth: "500px" }}>
-            <h2 style={{ color: "red" }}>Import Failed</h2>
-            <p>Some items could not be imported. Please review the issues below:</p>
+          <div className="modal-container" style={{ maxWidth: "500px", textAlign: "center" }}>
+            <h2 style={{ color: "red", marginBottom: "10px" }}>Import Failed</h2>
+            <p>{errorDetails.message}</p>
 
-            {/* Scrollable lists */}
-            {errorDetails.missingQuestions.length > 0 && (
+            {errorDetails.missingQuestions?.length > 0 && (
               <>
                 <h4 className="error-list-message">Missing Questions</h4>
                 <div className="error-list-container">
@@ -234,6 +221,7 @@ export default function ImportDataSetModal({ show, onClose, onSuccess, questionS
                 </div>
               </>
             )}
+
             <div className="modal-actions" style={{ justifyContent: "center", marginTop: "15px" }}>
               <button className="btn-cancel" onClick={() => setErrorDetails(null)}>
                 Close
@@ -242,7 +230,6 @@ export default function ImportDataSetModal({ show, onClose, onSuccess, questionS
           </div>
         </div>
       )}
-      
     </div>
   );
 }

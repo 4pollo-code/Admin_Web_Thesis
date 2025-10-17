@@ -47,9 +47,12 @@ def create_question_set():
     print(" Received request to create question set")
     try:
         data = request.get_json()
-        print("📥 Received payload:", data)
+        name = data.get("question_set_name")
 
-        # Step 1: Create QuestionSet
+        # ✅ Check for duplicate name
+        if QuestionSet.query.filter_by(question_set_name=name).first():
+            return jsonify({"error": "A question set with this name already exists."}), 409
+        
         new_set = QuestionSet(
             question_set_name=data["question_set_name"],
             description=data.get("description", "")
@@ -79,18 +82,28 @@ def update_question_set(set_id):
     s = QuestionSet.query.get_or_404(set_id)
     try:
         data = request.get_json()
-        s.question_set_name = data.get("question_set_name", s.question_set_name)
+        new_name = data.get("question_set_name", s.question_set_name)
+
+        # ✅ Check if another set already has this name
+        existing = QuestionSet.query.filter(
+            QuestionSet.question_set_name == new_name,
+            QuestionSet.question_set_id != set_id
+        ).first()
+
+        if existing:
+            return jsonify({
+                "error": f"A question set with the name '{new_name}' already exists."
+            }), 409  # 409 Conflict
+
+        # ✅ Update fields
+        s.question_set_name = new_name
         s.description = data.get("description", s.description)
         db.session.commit()
         return jsonify(s.question_set_info()), 200
+
     except SQLAlchemyError as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 400
-   
-
-
-
-
 
 
 @question_sets_bp.route("/question-sets/<int:set_id>/questions", methods=["GET"])
