@@ -377,6 +377,27 @@
   background-color: #d97706;
 }
 
+/* === Responsive === */
+@media (max-width: 1024px) {
+  .row-main { grid-template-columns: 1fr 1fr; }
+  .statistics-top-section.two-columns { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .assessment-header { flex-direction: column; align-items: stretch; }
+  .search-box input { width: 100%; }
+  .row-main { grid-template-columns: 1fr; text-align: left; }
+  .row-meta { grid-template-columns: 1fr; gap: 0.5rem; }
+  .statistics-bottom-section { grid-template-columns: 1fr; padding: 1rem; }
+}
+
+@media (max-width: 480px) {
+  .assessment-content { padding: 1rem; }
+  .assessment-header h1 { font-size: 1.2rem; }
+  .statistics-card-header h2 { font-size: 0.9rem; }
+  .statistics-question-table th, .statistics-question-table td { font-size: 0.8rem; padding: 0.5rem; }
+}
+
 /* PDF Preview Modal Styles   */
 /* -------------------------- */
 .modal-overlay {
@@ -573,217 +594,4 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
-}
-
-/* ================= Responsive Design ================= */
-
-/* ======== Large Tablets / Small Desktops (≤1024px) ======== */
-@media (max-width: 1024px) {
-  .assessment-content {
-    padding: 1.5rem;
-  }
-
-  .assessment-header h1 {
-    font-size: 1.5rem;
-  }
-
-  .row-main {
-    grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
-  }
-
-  .statistics-top-section.two-columns {
-    grid-template-columns: 1fr;
-  }
-
-  .statistics-bottom-section {
-    grid-template-columns: 1fr;
-    padding: 1rem;
-  }
-
-  .statistics-card {
-    padding: 0.9rem;
-  }
-
-  .statistics-question-table th,
-  .statistics-question-table td {
-    font-size: 0.85rem;
-    padding: 0.5rem;
-  }
-
-  .download-all-btn {
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
-  }
-}
-
-/* ======== Tablets / Landscape Mobile (≤768px) ======== */
-@media (max-width: 768px) {
-  .assessment-content {
-    padding: 1.25rem;
-  }
-
-  .assessment-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-  }
-
-  .assessment-header h1 {
-    text-align: center;
-    font-size: 1.35rem;
-  }
-
-  .header-right {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .search-box {
-    width: 100%;
-  }
-
-  .search-box input {
-    font-size: 0.95rem;
-  }
-
-  .summary-cards {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  }
-
-  .row-main {
-    grid-template-columns: 1fr;
-    text-align: left;
-  }
-
-  .row-meta {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-  }
-
-  .statistics-bottom-section {
-    grid-template-columns: 1fr;
-  }
-
-  .download-btn {
-    font-size: 0.8rem;
-    padding: 0.4rem 0.6rem;
-  }
-
-  .download-all-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .pagination {
-    justify-content: center;
-  }
-
-  .pagination-button {
-    padding: 0.45rem 0.85rem;
-    font-size: 0.8rem;
-  }
-
-  .preview-modal {
-    max-width: 95%;
-    padding: 1.5rem;
-  }
-}
-
-/* ======== Portrait Mobile (≤480px) ======== */
-@media (max-width: 480px) {
-  .assessment-content {
-    padding: 1rem;
-  }
-
-  .assessment-header h1 {
-    font-size: 1.15rem;
-  }
-
-  .search-box input {
-    font-size: 0.85rem;
-    padding: 0.6rem 0.75rem 0.6rem 2rem;
-  }
-
-  .summary-cards {
-    grid-template-columns: 1fr;
-  }
-
-  .card {
-    padding: 0.75rem;
-  }
-
-  .card h3 {
-    font-size: 0.9rem;
-  }
-
-  .card p {
-    font-size: 1rem;
-  }
-
-  .row-main {
-    padding: 0.75rem;
-  }
-
-  .row-left h2 {
-    font-size: 1rem;
-  }
-
-  .tie-badge-inline {
-    font-size: 0.7rem;
-    padding: 2px 6px;
-  }
-
-  .row-meta {
-    grid-template-columns: 1fr;
-    font-size: 0.8rem;
-    gap: 0.4rem;
-  }
-
-  .statistics-card-header h2 {
-    font-size: 0.85rem;
-  }
-
-  .statistics-question-table th,
-  .statistics-question-table td {
-    font-size: 0.75rem;
-    padding: 0.4rem;
-  }
-
-  .pagination-button {
-    padding: 0.4rem 0.75rem;
-    font-size: 0.75rem;
-  }
-
-  .download-btn,
-  .download-all-btn {
-    font-size: 0.8rem;
-    padding: 0.45rem 0.8rem;
-  }
-
-  .preview-modal {
-    width: 95%;
-    max-width: 400px;
-    padding: 1rem;
-  }
-
-  .preview-modal h2 {
-    font-size: 1.2rem;
-  }
-
-  .preview-modal p,
-  .preview-modal li,
-  .preview-modal table {
-    font-size: 0.85rem;
-  }
-
-  .modal-actions {
-    flex-direction: column;
-    gap: 0.6rem;
-  }
-
-  .modal-actions button {
-    width: 100%;
-    font-size: 0.9rem;
-  }
 }
